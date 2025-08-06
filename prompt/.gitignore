@@ -1,0 +1,10 @@
+
+__pycache__/
+
+OnePage.build/
+OnePage.dist/
+OnePage.onefile-build/
+
+TwoPage.build/
+TwoPage.dist/
+TwoPage.onefile-build/
