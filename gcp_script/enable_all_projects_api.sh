@@ -72,9 +72,23 @@ show_progress() {
 
 task_enable_api() {
     local project_id="$1"; local success_file="$2"
-    if retry_with_backoff "$MAX_RETRY_ATTEMPTS" "gcloud services enable generativelanguage.googleapis.com geminicloudassist.googleapis.com cloudaicompanion.googleapis.com --project=\"$project_id\" --quiet"; then
-        (flock 200; echo "$project_id" >> "$success_file";) 200>"${success_file}.lock"; return 0
-    else return 1; fi
+    local apis_to_enable=(
+        "generativelanguage.googleapis.com"
+        "geminicloudassist.googleapis.com"
+        "cloudaicompanion.googleapis.com"
+    )
+
+    for api in "${apis_to_enable[@]}"; do
+        log "INFO" "为项目 [$project_id] 启用API: $api"
+        if ! retry_with_backoff "$MAX_RETRY_ATTEMPTS" "gcloud services enable $api --project=\"$project_id\" --quiet"; then
+            log "ERROR" "为项目 [$project_id] 启用API $api 失败。"
+            return 1
+        fi
+    done
+
+    log "INFO" "项目 [$project_id] 的所有API均已成功启用。"
+    (flock 200; echo "$project_id" >> "$success_file";) 200>"${success_file}.lock"
+    return 0
 }
 
 # ===== 并行执行与报告 =====
@@ -84,7 +98,7 @@ run_parallel() {
     if (( total_items == 0 )); then log "INFO" "在 '$description' 阶段无项目处理。"; return; fi
     log "INFO" "开始并行执行 '$description' (最大并发: $MAX_PARALLEL_JOBS)..."
     local pids=(); local completed_count=0
-    export -f log retry_with_backoff "$task_func" show_progress; export MAX_RETRY_ATTEMPTS TEMP_DIR
+    export -f log retry_with_backoff "$task_func"; export MAX_RETRY_ATTEMPTS TEMP_DIR
     > "$success_file"
     for i in "${!items[@]}"; do
         if (( ${#pids[@]} >= MAX_PARALLEL_JOBS )); then
@@ -100,12 +114,17 @@ run_parallel() {
 }
 
 generate_report() {
-    local success=$1 failed=$2 total=$3 operation=${4:-"处理"}; local success_rate=0
+    local success=$1 failed=$2 total=$3 operation=${4:-"处理"} success_file=${5:-""}
     if (( total > 0 )); then success_rate=$(awk "BEGIN {printf \"%.2f\", $success * 100 / $total}"); fi
     local duration=$SECONDS h=$((duration/3600)) m=$(((duration%3600)/60)) s=$((duration%60))
     echo; echo "======================== 执 行 报 告 ========================";
     printf "  操作类型    : %s\n" "$operation"; printf "  总计尝试    : %d\n" "$total"; printf "  成功数量    : %d\n" "$success";
     printf "  失败数量    : %d\n" "$failed"; printf "  成功率      : %.2f%%\n" "$success_rate"; printf "  总执行时间  : %d小时 %d分钟 %d秒\n" "$h" "$m" "$s"
+    if [[ -n "$success_file" && -f "$success_file" && $(wc -l < "$success_file" | xargs) -gt 0 ]]; then
+        echo
+        echo "  成功启用API的项目:"
+        sed 's/^/    - /' "$success_file"
+    fi
     echo "================================================================"
 }
 
@@ -135,6 +154,10 @@ main() {
     local projects_array;
     readarray -t projects_array <<< "$project_list"
     log "INFO" "找到 ${#projects_array[@]} 个项目，将为所有项目启用API。"
+    echo
+    log "INFO" "将要处理以下项目:"
+    printf "  - %s\n" "${projects_array[@]}"
+    echo
     read -p "确认继续吗? [y/N]: " r
     if [[ ! "$r" =~ ^[Yy]$ ]]; then
         log "INFO" "操作取消。"
@@ -145,7 +168,7 @@ main() {
     run_parallel task_enable_api "启用API" "$ENABLED_PROJECTS_FILE" "${projects_array[@]}"
 
     local success_count; success_count=$(wc -l < "$ENABLED_PROJECTS_FILE" | xargs)
-    generate_report "$success_count" $((${#projects_array[@]} - success_count)) "${#projects_array[@]}" "启用API"
+    generate_report "$success_count" $((${#projects_array[@]} - success_count)) "${#projects_array[@]}" "启用API" "$ENABLED_PROJECTS_FILE"
 }
 
 # ===== 程序入口 =====
