@@ -17,10 +17,10 @@ const router = createRouter({
 
     },
     {
-      path: '/two-page-editor',
-      name: 'TwoPageEditorView',
-      component: () => import('@/views/TwoPageEditorView.vue'),
-      meta: { breadcrumb: 'Two Page Editor' }
+      path: '/editor-main',
+      name: 'MainEditorView',
+      component: () => import('@/views/MainEditorView.vue'),
+      meta: { breadcrumb: 'Main Editor' }
     },
     {
       path: '/file-manager',

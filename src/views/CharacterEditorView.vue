@@ -8,7 +8,7 @@
         </n-layout-header>
         <n-layout-content content-style="padding: 24px;">
           <n-tabs type="line" animated @update:value="handleTabChange">
-            <!-- 第一个标签页：编辑林凰.json -->
+            <!-- 第一个标签页：编辑角色.json -->
             <n-tab-pane name="BasicContent" tab="编辑基础内容">
               <CharacterBasicEditor ref="basicContentEditorRef" />
             </n-tab-pane>
@@ -30,7 +30,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import CharacterBasicEditor from '@/components/editor/CharacterBasicEditor.vue'
 import CharacterDataEditor from '@/components/editor/CharacterDataEditor.vue'
-import JsonPreviewContent from '@/components/char/JsonPreviewContent.vue'
+import JsonPreviewContent from '@/components/character/CharacterPreview.vue'
 import { useDataManager } from '@/store/dataManager'
 import { useMessage } from 'naive-ui'
 
@@ -172,7 +172,7 @@ onMounted(() => {
 })
 
 watch(
-  () => dataManager.linhuangData,
+  () => dataManager.characterData,
   () => {
     updateJsonDisplay()
   },

@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 import defaultJson from '@/assets/default.json'
 
-// 完整的林凰JSON数据结构
+// 完整的角色JSON数据结构
 export interface CharacterData {
   avatar_data_url?: string
   name: string
@@ -106,7 +106,7 @@ export interface CharacterData {
 const defaultData: CharacterData = defaultJson as CharacterData
 
 // 响应式数据存储
-const storedData = localStorage.getItem('linhuang_full_data')
+const storedData = localStorage.getItem('character_full_data')
 const initialData = storedData ? JSON.parse(storedData) : defaultData
 const CharData = reactive<CharacterData>(JSON.parse(JSON.stringify(initialData)))
 const originalData = reactive<CharacterData>(JSON.parse(JSON.stringify(initialData)))
@@ -135,7 +135,7 @@ export const useDataManager = () => {
     Object.assign(CharData, data)
     Object.assign(originalData, data)
     // 当设置新数据时，也更新localStorage
-    localStorage.setItem('linhuang_full_data', JSON.stringify(data))
+    localStorage.setItem('character_full_data', JSON.stringify(data))
   }
 
   // 设置基础数据
@@ -228,7 +228,7 @@ export const useDataManager = () => {
         }
       }
 
-      localStorage.setItem('linhuang_full_data', exportToJson())
+      localStorage.setItem('character_full_data', exportToJson())
 
       return {
         success: true,
@@ -253,7 +253,7 @@ export const useDataManager = () => {
         }
       }
 
-      localStorage.setItem('linhuang_full_data', exportToJson())
+      localStorage.setItem('character_full_data', exportToJson())
 
       return {
         success: true,
@@ -278,7 +278,7 @@ export const useDataManager = () => {
         }
       }
 
-      localStorage.setItem('linhuang_full_data', exportToJson())
+      localStorage.setItem('character_full_data', exportToJson())
 
       return {
         success: true,
@@ -347,7 +347,7 @@ export const useDataManager = () => {
   }
 
   return {
-    linhuangData: CharData,
+    characterData: CharData,
     getFullData,
     getBasicData,
     getDataField,

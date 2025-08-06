@@ -77,7 +77,7 @@ const handleImportJson = () => {
 const handleExportJson = () => {
   try {
     // 获取当前本地存储的数据
-    const savedData = localStorage.getItem('linhuang_full_data')
+    const savedData = localStorage.getItem('character_full_data')
     if (!savedData) {
       message.warning('本地存储中没有数据可导出')
       return
@@ -88,14 +88,14 @@ const handleExportJson = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `linhuang_data_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
+    a.download = `character_data_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 
     // 清空本地存储
-    localStorage.removeItem('linhuang_full_data')
+    localStorage.removeItem('character_full_data')
 
     // 重置数据管理器为默认数据
     dataManager.resetToDefault()

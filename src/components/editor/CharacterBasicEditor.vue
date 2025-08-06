@@ -211,7 +211,7 @@ watch(
 onMounted(async () => {
   try {
     // 尝试从本地存储加载数据
-    const savedData = localStorage.getItem('linhuang_full_data')
+    const savedData = localStorage.getItem('character_full_data')
     if (savedData) {
       dataManager.loadFromJson(savedData)
     } else {
