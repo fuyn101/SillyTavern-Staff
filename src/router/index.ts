@@ -6,17 +6,21 @@ const router = createRouter({
     {
       path: '/',
       name: 'HomeView',
-      component: () => import('@/views/HomeView.vue')
+      component: () => import('@/views/HomeView.vue'),
+      meta: { breadcrumb: 'Home' }
     },
     {
       path: '/editor',
       name: 'EditorView',
-      component: () => import('@/views/CharacterEditorView.vue')
+      component: () => import('@/views/CharacterEditorView.vue'),
+      meta: { breadcrumb: 'Editor' },
+
     },
     {
       path: '/two-page-editor',
       name: 'TwoPageEditorView',
-      component: () => import('@/views/TwoPageEditorView.vue')
+      component: () => import('@/views/TwoPageEditorView.vue'),
+      meta: { breadcrumb: 'Two Page Editor' }
     }
   ],
 })

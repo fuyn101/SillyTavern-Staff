@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Breadcrumb: typeof import('./src/components/Breadcrumb.vue')['default']
     CharacterBasicData: typeof import('./src/components/char/tabs/CharacterBasicData.vue')['default']
     CharacterBasicEditor: typeof import('./src/components/char/CharacterBasicEditor.vue')['default']
     CharacterBook: typeof import('./src/components/char/tabs/CharacterBook.vue')['default']
@@ -17,6 +18,8 @@ declare module 'vue' {
     JsonPreviewContent: typeof import('./src/components/char/JsonPreviewContent.vue')['default']
     MainComponent: typeof import('./src/components/MainComponent.vue')['default']
     MergedSettings: typeof import('./src/components/settings/MergedSettings.vue')['default']
+    NBreadcrumb: typeof import('naive-ui')['NBreadcrumb']
+    NBreadcrumbItem: typeof import('naive-ui')['NBreadcrumbItem']
     NButton: typeof import('naive-ui')['NButton']
     NCard: typeof import('naive-ui')['NCard']
     NCheckbox: typeof import('naive-ui')['NCheckbox']
