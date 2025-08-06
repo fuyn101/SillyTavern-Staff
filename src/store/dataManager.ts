@@ -1,5 +1,6 @@
-import { reactive } from 'vue'
+import { reactive, ref, toRaw } from 'vue'
 import defaultJson from '@/assets/default_character.json'
+import { getPreset, setPreset } from '@/utils/db'
 
 // 完整的角色JSON数据结构
 export interface CharacterData {
@@ -378,8 +379,49 @@ export const useDataManager = () => {
     return list.find(p => p.name === presetName);
   }
 
+  // 预设编辑器状态
+  const defaultPresetStruct = { prompts: [], prompt_order: [] };
+  const presetEditorLeft = reactive<any>(JSON.parse(JSON.stringify(defaultPresetStruct)));
+  const presetEditorRight = reactive<any>(JSON.parse(JSON.stringify(defaultPresetStruct)));
+  const presetsReady = ref(false);
+
+  // 从 IndexedDB 初始化数据
+  const initPresets = async () => {
+    const [leftData, rightData] = await Promise.all([
+      getPreset('left'),
+      getPreset('right')
+    ]);
+    Object.assign(presetEditorLeft, leftData || defaultPresetStruct);
+    Object.assign(presetEditorRight, rightData || defaultPresetStruct);
+    presetsReady.value = true;
+  };
+
+  initPresets();
+
+  const updatePresetEditorData = async (side: 'left' | 'right', data: any) => {
+    const target = side === 'left' ? presetEditorLeft : presetEditorRight;
+    // Update the reactive object
+    Object.assign(target, data);
+    try {
+      // Save a raw, non-reactive version to IndexedDB
+      await setPreset(side, toRaw(target));
+    } catch (error) {
+      console.error(`Failed to save preset to IndexedDB for side '${side}':`, error);
+      // 这里可以添加用户通知
+    }
+  };
+
+  const loadPresetToEditor = (presetData: any, side: 'left' | 'right') => {
+    updatePresetEditorData(side, presetData);
+  };
+
   return {
     characterData: CharData,
+    presetEditorLeft,
+    presetEditorRight,
+    presetsReady,
+    updatePresetEditorData,
+    loadPresetToEditor,
     getFullData,
     getBasicData,
     getDataField,

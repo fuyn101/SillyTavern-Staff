@@ -259,14 +259,9 @@ onMounted(refreshLists);
 const loadPreset = (name: string, side: 'left' | 'right') => {
   const preset = dataManager.loadPresetFromList(name);
   if (preset) {
-    router.push({
-      name: 'PresetEditor',
-      state: {
-        presetData: preset,
-        targetSide: side,
-      },
-    });
-    message.success(`预设 ${name} 已加载到 ${side === 'left' ? '左侧' : '右侧'}，正在跳转...`);
+    dataManager.loadPresetToEditor(preset, side);
+    message.success(`预设 ${name} 已加载到 ${side === 'left' ? '左侧' : '右侧'}`);
+    router.push('/preset-editor');
   } else {
     message.error('加载预设失败！');
   }
