@@ -346,6 +346,38 @@ export const useDataManager = () => {
     localStorage.setItem('character_cards', JSON.stringify([]))
   }
 
+  // 获取预设列表
+  const getPresetList = (): any[] => {
+    const listJson = localStorage.getItem('preset_list');
+    return listJson ? JSON.parse(listJson) : [];
+  }
+
+  // 保存预设到列表
+  const savePresetToList = (presetData: any, name: string) => {
+    const list = getPresetList();
+    const presetWithName = { ...presetData, name };
+    const existingIndex = list.findIndex(p => p.name === name);
+    if (existingIndex > -1) {
+      list[existingIndex] = presetWithName; // 更新
+    } else {
+      list.push(presetWithName); // 添加
+    }
+    localStorage.setItem('preset_list', JSON.stringify(list));
+  }
+
+  // 从列表中删除预设
+  const deletePresetFromList = (presetName: string) => {
+    let list = getPresetList();
+    list = list.filter(p => p.name !== presetName);
+    localStorage.setItem('preset_list', JSON.stringify(list));
+  }
+
+  // 从列表中加载预设
+  const loadPresetFromList = (presetName: string) => {
+    const list = getPresetList();
+    return list.find(p => p.name === presetName);
+  }
+
   return {
     characterData: CharData,
     getFullData,
@@ -370,5 +402,9 @@ export const useDataManager = () => {
     getCardsByNames,
     deleteCardsFromList,
     clearAllCards,
+    getPresetList,
+    savePresetToList,
+    deletePresetFromList,
+    loadPresetFromList,
   }
 }

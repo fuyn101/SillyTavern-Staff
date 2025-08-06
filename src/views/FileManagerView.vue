@@ -34,13 +34,32 @@
         @delete="deleteCard"
       />
     </n-list>
+
+    <n-h1 style="margin-top: 40px;">预设管理器</n-h1>
+    <n-list bordered>
+      <n-list-item v-for="preset in presetList" :key="preset.name">
+        <n-card :title="preset.name">
+          <template #action>
+            <n-space>
+              <n-button @click="loadPreset(preset.name)">加载</n-button>
+              <n-popconfirm @positive-click="deletePreset(preset.name)">
+                <template #trigger>
+                  <n-button type="error">删除</n-button>
+                </template>
+                确定要删除预设 "{{ preset.name }}" 吗？
+              </n-popconfirm>
+            </n-space>
+          </template>
+        </n-card>
+      </n-list-item>
+    </n-list>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useDataManager, type CharacterData } from '@/store/dataManager';
-import { useMessage, NButton, NSpace, NList, NH1, NPopconfirm } from 'naive-ui';
+import { useMessage, NButton, NSpace, NList, NH1, NPopconfirm, NListItem, NCard } from 'naive-ui';
 import { useRouter } from 'vue-router';
 import { extractDataFromPng, embedDataInPng } from '@/utils/pngProcessor';
 import CharacterCardItem from '@/components/common/CharacterCardItem.vue';
@@ -49,13 +68,15 @@ const dataManager = useDataManager();
 const router = useRouter();
 const message = useMessage();
 const cardList = ref<CharacterData[]>([]);
+const presetList = ref<any[]>([]);
 const selectedCards = ref<string[]>([]);
 const pngUploader = ref<HTMLInputElement | null>(null);
 const jsonUploader = ref<HTMLInputElement | null>(null);
 const presetUploader = ref<HTMLInputElement | null>(null);
 
-const refreshList = () => {
+const refreshLists = () => {
   cardList.value = dataManager.getCardList();
+  presetList.value = dataManager.getPresetList();
   selectedCards.value = [];
 };
 
@@ -75,7 +96,7 @@ const handlePngUpload = (event: Event) => {
           fileReaderForDataUrl.onload = (e_du) => {
             cardData.avatar_data_url = e_du.target?.result as string;
             dataManager.saveCardToList(cardData);
-            refreshList();
+            refreshLists();
             message.success('角色卡导入成功！');
           };
           fileReaderForDataUrl.readAsDataURL(file);
@@ -103,7 +124,7 @@ const loadCard = (name: string) => {
 const deleteCard = (name: string) => {
   dataManager.deleteCardFromList(name);
   message.success(`已删除角色卡: ${name}`);
-  refreshList();
+  refreshLists();
 };
 
 const triggerPngImport = () => {
@@ -130,7 +151,7 @@ const handleJsonUpload = (event: Event) => {
         const json = JSON.parse(e.target?.result as string);
         dataManager.saveCardToList(json);
         message.success(`成功导入 ${file.name}`);
-        refreshList();
+        refreshLists();
       } catch (error) {
         message.error(`导入 ${file.name} 失败`);
         console.error(error);
@@ -149,12 +170,10 @@ const handlePresetUpload = (event: Event) => {
   reader.onload = (e) => {
     try {
       const preset = JSON.parse(e.target?.result as string);
-      // Navigate to the preset editor with the preset data
-      router.push({
-        name: 'TwoPageEditor',
-        state: { presetData: preset },
-      });
-      message.success(`预设 ${file.name} 已加载，正在跳转到编辑器...`);
+      const presetName = file.name.replace(/\.json$/, '');
+      dataManager.savePresetToList(preset, presetName);
+      refreshLists();
+      message.success(`预设 ${file.name} 已成功导入并保存。`);
     } catch (error) {
       message.error(`导入预设 ${file.name} 失败`);
       console.error(error);
@@ -215,13 +234,13 @@ const exportSelectedCardsAsPng = async () => {
 const deleteSelectedCards = () => {
   dataManager.deleteCardsFromList(selectedCards.value);
   message.success('已删除所选角色卡');
-  refreshList();
+  refreshLists();
 };
 
 const clearAllCards = () => {
   dataManager.clearAllCards();
   message.success('已清空所有角色卡');
-  refreshList();
+  refreshLists();
 };
 
 const toggleCardSelection = (name: string, checked: boolean) => {
@@ -234,7 +253,26 @@ const toggleCardSelection = (name: string, checked: boolean) => {
   }
 };
 
-onMounted(refreshList);
+onMounted(refreshLists);
+
+const loadPreset = (name: string) => {
+  const preset = dataManager.loadPresetFromList(name);
+  if (preset) {
+    router.push({
+      name: 'TwoPageEditor',
+      state: { presetData: preset },
+    });
+    message.success(`预设 ${name} 已加载，正在跳转到编辑器...`);
+  } else {
+    message.error('加载预设失败！');
+  }
+};
+
+const deletePreset = (name: string) => {
+  dataManager.deletePresetFromList(name);
+  message.success(`已删除预设: ${name}`);
+  refreshLists();
+};
 </script>
 
 <style scoped>
