@@ -121,7 +121,10 @@ create_projects_only() {
     log "INFO" "使用随机生成的用户名: ${EMAIL_USERNAME}"
     
     # 询问要创建的项目数量
-    read -p "请输入要创建的项目数量 (1-75，默认为$TOTAL_PROJECTS): " custom_count
+    # 检查是否在交互式终端中运行，并从/dev/tty读取以确保健壮性
+    if [ -t 0 ]; then
+      read -p "请输入要创建的项目数量 (1-75，默认为$TOTAL_PROJECTS): " custom_count < /dev/tty
+    fi
     custom_count=${custom_count:-$TOTAL_PROJECTS}
     
     if ! [[ "$custom_count" =~ ^[1-9][0-9]*$ ]] || [ "$custom_count" -gt 75 ]; then
