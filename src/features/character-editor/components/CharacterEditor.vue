@@ -10,8 +10,6 @@
       <n-tab-pane name="data" tab="编辑data">
         <CharacterDataEditor />
       </n-tab-pane>
-
-
     </n-tabs>
   </div>
 </template>
@@ -20,17 +18,6 @@
 import { NTabs, NTabPane } from 'naive-ui';
 import CharacterBasicEditor from './CharacterBasicEditor.vue';
 import CharacterDataEditor from './CharacterDataEditor.vue';
-import PromptsTab from './PromptsTab.vue';
-import { useDataManager } from '@/store/dataManager';
-import { storeToRefs } from 'pinia';
-
-const dataManager = useDataManager();
-const { prompts } = storeToRefs(dataManager);
-
-const updatePrompts = (newPrompts: any[]) => {
-  dataManager.updatePrompts(newPrompts);
-};
-
 </script>
 
 <style scoped>
