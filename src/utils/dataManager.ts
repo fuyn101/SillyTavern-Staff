@@ -287,6 +287,42 @@ export const useDataManager = () => {
     }
   }
 
+  // 获取角色卡列表
+  const getCardList = (): CharacterData[] => {
+    const listJson = localStorage.getItem('character_cards')
+    return listJson ? JSON.parse(listJson) : []
+  }
+
+  // 保存角色卡到列表
+  const saveCardToList = (cardData: CharacterData) => {
+    const list = getCardList()
+    const existingIndex = list.findIndex(c => c.name === cardData.name)
+    if (existingIndex > -1) {
+      list[existingIndex] = cardData // 更新现有卡片
+    } else {
+      list.push(cardData) // 添加新卡片
+    }
+    localStorage.setItem('character_cards', JSON.stringify(list))
+  }
+
+  // 从列表中删除角色卡
+  const deleteCardFromList = (cardName: string) => {
+    let list = getCardList()
+    list = list.filter(c => c.name !== cardName)
+    localStorage.setItem('character_cards', JSON.stringify(list))
+  }
+
+  // 从列表中加载角色卡
+  const loadCardFromList = (cardName: string) => {
+    const list = getCardList()
+    const cardData = list.find(c => c.name === cardName)
+    if (cardData) {
+      setFullData(cardData)
+      return true
+    }
+    return false
+  }
+
   return {
     linhuangData: CharData,
     getFullData,
@@ -302,8 +338,11 @@ export const useDataManager = () => {
     validateData,
     validateBasicData,
     validateDataField,
-
     saveBasicDataToLocalStorage,
     saveDataFieldToLocalStorage,
+    getCardList,
+    saveCardToList,
+    deleteCardFromList,
+    loadCardFromList,
   }
 }
