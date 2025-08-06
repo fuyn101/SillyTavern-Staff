@@ -20,7 +20,7 @@
       </n-space>
       <n-button @click="showJsonPreview = true">预览 JSON</n-button>
     </n-layout-header>
-    <n-layout-content content-style="height: calc(100% - 64px);">
+    <n-layout-content style="height: 90%;">
       <character-editor :active-tab="activeTab" />
     </n-layout-content>
   </n-layout>
