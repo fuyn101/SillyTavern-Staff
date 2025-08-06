@@ -49,7 +49,7 @@ import { RouterLink } from 'vue-router';
   align-items: center;
   padding-top: 40px;
   box-sizing: border-box;
-  height: 100%;
+
 }
 
 .action-card {

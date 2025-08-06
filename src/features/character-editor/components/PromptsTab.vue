@@ -1,97 +1,98 @@
 <template>
-  <div>
-    <h2>提示词管理</h2>
-    <n-split direction="horizontal" style="height: 80vh">
-      <template #1>
-        <n-card title="提示词列表" :content-style="{ flex: 1, overflow: 'auto' }" :style="{ height: '100%', display: 'flex', flexDirection: 'column' }">
-          <n-list bordered>
-            <n-list-item v-for="(prompt, index) in prompts" :key="prompt.identifier" @click="selectPrompt(index)">
-              {{ prompt.name }}
-            </n-list-item>
-          </n-list>
-          <template #action>
-            <n-button @click="addPrompt">添加</n-button>
-            <n-button @click="deletePrompt">删除</n-button>
-          </template>
-        </n-card>
-      </template>
-      <template #2>
-        <n-tabs type="line" animated>
-          <n-tab-pane name="editor" tab="编辑器">
-            <n-card title="提示词详情">
-              <n-form>
-                <n-form-item label="提示词名称">
-                  <n-input v-model:value="selectedPrompt.name" />
-                </n-form-item>
-                <n-grid :cols="2" :x-gap="12">
-                  <n-gi>
-                    <n-form-item label="提示词名称">
-                      <n-input v-model:value="selectedPrompt.name" />
-                    </n-form-item>
-                    <n-form-item>
-                      <n-checkbox v-model:checked="selectedPrompt.system_prompt">是否为标准模版默认提示词</n-checkbox>
-                    </n-form-item>
-                    <n-form-item label="Role">
-                      <n-select v-model:value="selectedPrompt.role" :options="roleOptions" />
-                    </n-form-item>
-                    <n-form-item label="Identifier">
-                      <n-input v-model:value="selectedPrompt.identifier" />
-                    </n-form-item>
-                    <n-form-item>
-                      <n-checkbox v-model:checked="selectedPrompt.add_to_order">是否在列表里</n-checkbox>
-                    </n-form-item>
-                    <n-form-item>
-                      <n-checkbox v-model:checked="selectedPrompt.enabled">是否在列表里开启</n-checkbox>
-                    </n-form-item>
-                    <n-form-item>
-                      <n-checkbox v-model:checked="selectedPrompt.marker">是否是图钉提示词</n-checkbox>
-                    </n-form-item>
-                  </n-gi>
-                  <n-gi>
-                    <n-form-item label="注入位置">
-                      <n-select v-model:value="selectedPrompt.injection_position" :options="injectionPositionOptions" />
-                    </n-form-item>
-                    <n-form-item label="注入深度（1时使用）">
-                      <n-input-number v-model:value="selectedPrompt.injection_depth" />
-                    </n-form-item>
-                    <n-form-item label="注入顺序（1时使用）">
-                      <n-input-number v-model:value="selectedPrompt.injection_order" />
-                    </n-form-item>
-                    <n-form-item>
-                      <n-checkbox v-model:checked="selectedPrompt.forbid_overrides">Forbid Overrides</n-checkbox>
-                    </n-form-item>
-                  </n-gi>
-                </n-grid>
-                <n-form-item label="Content">
-                  <n-input type="textarea" v-model:value="selectedPrompt.content" :rows="6" />
-                </n-form-item>
-              </n-form>
-              <template #action>
-                <n-button @click="savePrompt">保存提示词</n-button>
-              </template>
-            </n-card>
-          </n-tab-pane>
-          <n-tab-pane name="variables" tab="变量信息">
-            <n-input v-model:value="variableFilter" placeholder="筛选变量" />
-            <n-data-table :columns="variableColumns" :data="filteredVariables" />
-          </n-tab-pane>
-          <n-tab-pane name="order" tab="Order排序">
-            <draggable v-model="prompts" item-key="identifier">
-              <template #item="{ element }">
-                <n-list-item>{{ element.name }}</n-list-item>
-              </template>
-            </draggable>
-          </n-tab-pane>
-        </n-tabs>
-      </template>
-    </n-split>
-  </div>
+  <n-layout style="height: 100%">
+    <n-layout-header style="padding: 12px 24px; font-weight: bold; font-size: 1.2em;">
+      提示词管理
+    </n-layout-header>
+    <n-layout-content content-style="padding: 0 24px 24px; height: calc(100% - 120px);">
+      <n-split direction="horizontal" style="height: 100%">
+        <template #1>
+          <n-card title="提示词列表" :content-style="{ flex: 1 }" :style="{ height: '100%', display: 'flex', flexDirection: 'column' }">
+            <div class="list-container" v-drag-list="{ list: prompts, key: 'identifier', dragItemClass: 'drag-item', dragHandleClass: 'drag-handle' }" @drag-end="handleDragEnd">
+              <div
+                v-for="(prompt, index) in prompts"
+                :key="prompt.identifier"
+                :data-id="prompt.identifier"
+                @click="selectPrompt(index)"
+                class="drag-item list-item-imitation"
+              >
+                <span class="drag-handle">⋮⋮</span>
+                <span>{{ prompt.name }}</span>
+              </div>
+            </div>
+          </n-card>
+        </template>
+        <template #2>
+          <n-tabs type="line" animated>
+            <n-tab-pane name="editor" tab="编辑器">
+              <n-card title="提示词详情">
+                <n-form>
+                  <n-form-item label="提示词名称">
+                    <n-input v-model:value="selectedPrompt.name" />
+                  </n-form-item>
+                  <n-grid :cols="2" :x-gap="12">
+                    <n-gi>
+                      <n-form-item>
+                        <n-checkbox v-model:checked="selectedPrompt.system_prompt">是否为标准模版默认提示词</n-checkbox>
+                      </n-form-item>
+                      <n-form-item label="Role">
+                        <n-select v-model:value="selectedPrompt.role" :options="roleOptions" />
+                      </n-form-item>
+                      <n-form-item label="Identifier">
+                        <n-input v-model:value="selectedPrompt.identifier" />
+                      </n-form-item>
+                      <n-form-item>
+                        <n-checkbox v-model:checked="selectedPrompt.add_to_order">是否在列表里</n-checkbox>
+                      </n-form-item>
+                      <n-form-item>
+                        <n-checkbox v-model:checked="selectedPrompt.enabled">是否在列表里开启</n-checkbox>
+                      </n-form-item>
+                      <n-form-item>
+                        <n-checkbox v-model:checked="selectedPrompt.marker">是否是图钉提示词</n-checkbox>
+                      </n-form-item>
+                    </n-gi>
+                    <n-gi>
+                      <n-form-item label="注入位置">
+                        <n-select v-model:value="selectedPrompt.injection_position" :options="injectionPositionOptions" />
+                      </n-form-item>
+                      <n-form-item label="注入深度（1时使用）">
+                        <n-input-number v-model:value="selectedPrompt.injection_depth" />
+                      </n-form-item>
+                      <n-form-item label="注入顺序（1时使用）">
+                        <n-input-number v-model:value="selectedPrompt.injection_order" />
+                      </n-form-item>
+                      <n-form-item>
+                        <n-checkbox v-model:checked="selectedPrompt.forbid_overrides">Forbid Overrides</n-checkbox>
+                      </n-form-item>
+                    </n-gi>
+                  </n-grid>
+                  <n-form-item label="Content">
+                    <n-input type="textarea" v-model:value="selectedPrompt.content" :rows="6" />
+                  </n-form-item>
+                </n-form>
+              </n-card>
+            </n-tab-pane>
+            <n-tab-pane name="variables" tab="变量信息">
+              <n-input v-model:value="variableFilter" placeholder="筛选变量" />
+              <n-data-table :columns="variableColumns" :data="filteredVariables" />
+            </n-tab-pane>
+          </n-tabs>
+        </template>
+      </n-split>
+    </n-layout-content>
+    <n-layout-footer style="padding: 12px 24px; display: flex; justify-content: space-between;">
+      <div>
+        <n-button @click="addPrompt" type="primary">添加</n-button>
+        <n-button @click="deletePrompt" type="error" style="margin-left: 8px;">删除</n-button>
+      </div>
+      <n-button @click="savePrompt" type="success">保存提示词</n-button>
+    </n-layout-footer>
+  </n-layout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import draggable from 'vuedraggable';
+import { vDragList } from 'vue3-drag-directive';
 
 const roleOptions = [
   { label: 'system', value: 'system' },
@@ -106,10 +107,9 @@ const injectionPositionOptions = [
 
 const props = defineProps<{
   prompts: any[];
-  order: any[];
 }>();
 
-const emit = defineEmits(['update:prompts', 'update:order']);
+const emit = defineEmits(['update:prompts']);
 
 const prompts = ref<any[]>(props.prompts);
 const selectedPrompt = reactive<any>({});
@@ -210,4 +210,42 @@ function savePrompt() {
     prompts.value[selectedIndex] = { ...selectedPrompt };
   }
 }
+
+function handleDragEnd(event: any) {
+  // The directive mutates the array directly.
+  // The watcher on 'prompts' will emit the update to the parent.
+  console.log('Drag operation finished:', event);
+}
 </script>
+
+<style scoped>
+.list-container {
+  border: 1px solid rgb(224, 224, 230);
+  border-radius: 3px;
+}
+
+.list-item-imitation {
+  padding: 12px;
+  border-bottom: 1px solid rgb(224, 224, 230);
+  transition: background-color 0.3s;
+}
+
+.list-item-imitation:last-child {
+  border-bottom: none;
+}
+
+.list-item-imitation:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.drag-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.drag-handle {
+  cursor: grab;
+  margin-right: 10px;
+  user-select: none;
+}
+</style>

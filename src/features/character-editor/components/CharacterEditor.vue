@@ -13,7 +13,7 @@
 
       <!-- 第三个标签页：编辑提示词 -->
       <n-tab-pane name="prompts" tab="编辑提示词">
-        <PromptsTab :prompts="prompts" :order="order" @update:prompts="updatePrompts" @update:order="updateOrder" />
+        <PromptsTab :prompts="prompts" @update:prompts="updatePrompts" />
       </n-tab-pane>
     </n-tabs>
   </div>
@@ -28,15 +28,12 @@ import { useDataManager } from '@/store/dataManager';
 import { storeToRefs } from 'pinia';
 
 const dataManager = useDataManager();
-const { prompts, order } = storeToRefs(dataManager);
+const { prompts } = storeToRefs(dataManager);
 
 const updatePrompts = (newPrompts: any[]) => {
   dataManager.updatePrompts(newPrompts);
 };
 
-const updateOrder = (newOrder: any[]) => {
-  dataManager.updateOrder(newOrder);
-};
 </script>
 
 <style scoped>

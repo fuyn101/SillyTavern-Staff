@@ -2,7 +2,7 @@
   <n-card>
     <n-tabs type="line" animated>
       <n-tab-pane name="prompts" tab="提示词管理">
-        <prompts-tab :prompts="jsonData.prompts" :order="jsonData.prompt_order" @update:prompts="updatePrompts" @update:order="updateOrder" />
+        <prompts-tab :prompts="jsonData.prompts" @update:prompts="updatePrompts" />
       </n-tab-pane>
       <n-tab-pane name="settings" tab="设置">
         <prompt-settings :settings="jsonData" @update:settings="updateSettings" />
@@ -49,9 +49,6 @@ function updatePrompts(newPrompts: any[]) {
   jsonData.prompts = newPrompts;
 }
 
-function updateOrder(newOrder: any[]) {
-  jsonData.prompt_order = newOrder;
-}
 
 function updateSettings(newSettings: any) {
   // No need to Object.assign, direct mutation is fine for reactive objects

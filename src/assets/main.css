@@ -20,7 +20,7 @@ body {
   background-color: var(--primary-bg-color);
   color: var(--primary-text-color);
   height: 100vh;
-  overflow: hidden;
+
 }
 
 /* Scrollbar styles */
@@ -51,6 +51,6 @@ body {
 
 .app-main {
   height: 100%;
-  overflow-y: auto;
+
   padding: 16px;
 }

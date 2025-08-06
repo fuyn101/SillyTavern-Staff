@@ -112,10 +112,9 @@ export const useDataManager = defineStore('dataManager', () => {
   );
   const originalData = reactive<CharacterData>(JSON.parse(JSON.stringify(characterData)));
   const prompts = ref<any[]>(defaultPrompts.prompts);
-  const order = ref<any[]>(defaultPrompts.prompt_order);
 
-  const presetEditorLeft = reactive<any>({ prompts: [], prompt_order: [] });
-  const presetEditorRight = reactive<any>({ prompts: [], prompt_order: [] });
+  const presetEditorLeft = reactive<any>({ prompts: [] });
+  const presetEditorRight = reactive<any>({ prompts: [] });
   const presetsReady = ref(false);
 
   // Actions
@@ -123,9 +122,6 @@ export const useDataManager = defineStore('dataManager', () => {
     prompts.value = newPrompts;
   };
 
-  const updateOrder = (newOrder: any[]) => {
-    order.value = newOrder;
-  };
 
   const getFullData = (): CharacterData => {
     return JSON.parse(JSON.stringify(characterData));
@@ -154,8 +150,8 @@ export const useDataManager = defineStore('dataManager', () => {
 
   const initPresets = async () => {
     const [leftData, rightData] = await Promise.all([getPreset('left'), getPreset('right')]);
-    Object.assign(presetEditorLeft, leftData || { prompts: [], prompt_order: [] });
-    Object.assign(presetEditorRight, rightData || { prompts: [], prompt_order: [] });
+    Object.assign(presetEditorLeft, leftData || { prompts: [] });
+    Object.assign(presetEditorRight, rightData || { prompts: [] });
     presetsReady.value = true;
   };
 
@@ -178,12 +174,10 @@ export const useDataManager = defineStore('dataManager', () => {
   return {
     characterData,
     prompts,
-    order,
     presetEditorLeft,
     presetEditorRight,
     presetsReady,
     updatePrompts,
-    updateOrder,
     getFullData,
     setFullData,
     loadFromJson,

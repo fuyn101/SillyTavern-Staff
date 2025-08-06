@@ -27,7 +27,7 @@ const showDrawer = ref(false)
 <style scoped>
 .json-content {
   flex: 1;
-  overflow: auto;
+
   padding: 16px;
 }
 

@@ -275,7 +275,5 @@ const deletePreset = (name: string) => {
 </script>
 
 <style scoped>
-.file-manager-container {
-  padding: 24px;
-}
+
 </style>
