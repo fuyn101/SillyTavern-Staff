@@ -17,6 +17,7 @@
 
 # ===== 全局配置 =====
 MAX_RETRY_ATTEMPTS=3
+MAX_PARALLEL_JOBS=4
 
 # ===== 工具函数 =====
 
@@ -57,15 +58,17 @@ retry_with_backoff() {
 # 启用API的任务函数
 task_enable_api() {
     local project_id="$1"
+    local success_file="$2"
     log "INFO" "--------------------------------------------------"
     log "INFO" "正在为项目 '$project_id' 启用API..."
     local result_output
     if result_output=$(retry_with_backoff "$MAX_RETRY_ATTEMPTS" "gcloud services enable generativelanguage.googleapis.com geminicloudassist.googleapis.com cloudaicompanion.googleapis.com --project=\"$project_id\" --quiet"); then
         log "INFO" "成功为项目 '$project_id' 启用API。"
         if [[ -n "$result_output" ]]; then
-            # 将gcloud的输出作为调试信息打印
             log "DEBUG" "gcloud命令输出: $result_output"
         fi
+        # 将成功结果写入文件
+        (flock 200; echo "$project_id" >> "$success_file") 200>"${success_file}.lock"
         return 0
     else
         log "ERROR" "为项目 '$project_id' 启用API失败。详细错误已在上方日志中显示。"
@@ -105,37 +108,76 @@ main() {
         exit 0
     fi
 
-    local PROJECT_IDS
-    readarray -t PROJECT_IDS <<< "$project_list"
+    local ALL_PROJECT_IDS
+    readarray -t ALL_PROJECT_IDS <<< "$project_list"
+    local total_projects=${#ALL_PROJECT_IDS[@]}
 
-    local SUCCESS_COUNT=0
-    local FAILED_PROJECTS=()
+    local TEMP_DIR="/tmp/gcp_script_$(date +%s)"
+    mkdir -p "$TEMP_DIR"
+    local SUCCESS_FILE="${TEMP_DIR}/success.txt"
+    > "$SUCCESS_FILE"
+
+    # 导出函数和变量，以便在子shell中可用
+    export -f log retry_with_backoff task_enable_api
+    export MAX_RETRY_ATTEMPTS
 
     echo
-    log "INFO" "将为找到的 ${#PROJECT_IDS[@]} 个项目自动启用API。"
+    log "INFO" "将为找到的 $total_projects 个项目自动启用API (并发数: $MAX_PARALLEL_JOBS)。"
     log "INFO" "3秒后开始执行... (按 Ctrl+C 取消)"
     sleep 3
 
-    for project_id in "${PROJECT_IDS[@]}"; do
-        if task_enable_api "$project_id"; then
-            ((SUCCESS_COUNT++))
-        else
-            FAILED_PROJECTS+=("$project_id")
+    local pids=()
+    for project_id in "${ALL_PROJECT_IDS[@]}"; do
+        if (( ${#pids[@]} >= MAX_PARALLEL_JOBS )); then
+            wait -n "${pids[@]}"
+            # 清理已完成的进程ID
+            local new_pids=()
+            for pid in "${pids[@]}"; do
+                if kill -0 "$pid" 2>/dev/null; then
+                    new_pids+=("$pid")
+                fi
+            done
+            pids=("${new_pids[@]}")
+        fi
+        ( task_enable_api "$project_id" "$SUCCESS_FILE" ) & pids+=($!)
+    done
+
+    # 等待所有剩余的后台作业完成
+    wait "${pids[@]}"
+
+    local success_ids=()
+    if [ -f "$SUCCESS_FILE" ]; then
+        mapfile -t success_ids < "$SUCCESS_FILE"
+    fi
+    
+    local success_count=${#success_ids[@]}
+    local failed_count=$((total_projects - success_count))
+    
+    # 找出失败的项目
+    local failed_projects=()
+    local success_map=()
+    for id in "${success_ids[@]}"; do success_map["$id"]=1; done
+    for id in "${ALL_PROJECT_IDS[@]}"; do
+        if [[ -z "${success_map[$id]}" ]]; then
+            failed_projects+=("$id")
         fi
     done
 
     echo
     log "INFO" "==================== 执行完毕 ===================="
-    log "INFO" "总共处理项目数: ${#PROJECT_IDS[@]}"
-    log "INFO" "成功启用API的项目数: $SUCCESS_COUNT"
-    log "INFO" "失败的项目数: ${#FAILED_PROJECTS[@]}"
-    if [ ${#FAILED_PROJECTS[@]} -gt 0 ]; then
+    log "INFO" "总共处理项目数: $total_projects"
+    log "INFO" "成功启用API的项目数: $success_count"
+    log "INFO" "失败的项目数: $failed_count"
+    if [ $failed_count -gt 0 ]; then
         log "ERROR" "以下项目启用API失败:"
-        for project_id in "${FAILED_PROJECTS[@]}"; do
+        for project_id in "${failed_projects[@]}"; do
             log "ERROR" "  - $project_id"
         done
     fi
     log "INFO" "=================================================="
+    
+    # 清理临时文件
+    rm -rf "$TEMP_DIR"
 }
 
 main "$@"
