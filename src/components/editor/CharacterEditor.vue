@@ -1,24 +1,23 @@
 <template>
   <n-layout>
     <n-layout-header>
-      <n-h1>角色卡编辑器</n-h1>
+      <n-h1 style="margin: 0;">角色卡编辑器</n-h1>
+      <CharacterPreview :jsonData="jsonData" />
     </n-layout-header>
-    <n-layout-content content-style="padding: 24px;">
-      <n-tabs type="line" animated @update:value="handleTabChange">
-        <!-- 第一个标签页：编辑角色.json -->
-        <n-tab-pane name="BasicContent" tab="编辑基础内容">
-          <CharacterBasicEditor ref="basicContentEditorRef" />
-        </n-tab-pane>
+    <n-layout-content class="editor-layout-content">
+      <div class="editor-content">
+        <n-tabs type="line" animated @update:value="handleTabChange" class="editor-tabs">
+          <!-- 第一个标签页：编辑角色.json -->
+          <n-tab-pane name="BasicContent" tab="编辑基础内容">
+            <CharacterBasicEditor ref="basicContentEditorRef" />
+          </n-tab-pane>
 
-        <!-- 第二个标签页：编辑data -->
-        <n-tab-pane name="data" tab="编辑data">
-          <CharacterDataEditor ref="dataEditorRef" />
-        </n-tab-pane>
-      </n-tabs>
-
-      <n-card title="角色卡 JSON 预览" style="margin-top: 24px;">
-        <n-code :code="jsonData" language="json" show-line-numbers />
-      </n-card>
+          <!-- 第二个标签页：编辑data -->
+          <n-tab-pane name="data" tab="编辑data">
+            <CharacterDataEditor ref="dataEditorRef" />
+          </n-tab-pane>
+        </n-tabs>
+      </div>
     </n-layout-content>
   </n-layout>
 </template>
@@ -27,6 +26,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import CharacterBasicEditor from '@/components/editor/CharacterBasicEditor.vue'
 import CharacterDataEditor from '@/components/editor/CharacterDataEditor.vue'
+import CharacterPreview from '@/components/character/CharacterPreview.vue'
 import { useDataManager } from '@/store/dataManager'
 
 const dataManager = useDataManager()
@@ -89,8 +89,10 @@ watch(
 
 .n-layout-header {
   height: 64px;
-  line-height: 64px;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
   font-size: 18px;
   font-weight: bold;
   background-color: var(--n-color);
@@ -98,11 +100,23 @@ watch(
   position: sticky;
   top: 0;
   z-index: 10;
+  flex-shrink: 0;
 }
 
-.n-tabs {
+.editor-layout-content {
   display: flex;
   flex-direction: column;
+  height: calc(100vh - 64px);
+  padding: 24px;
+}
+
+.editor-content {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.editor-tabs {
   height: 100%;
 }
+
 </style>

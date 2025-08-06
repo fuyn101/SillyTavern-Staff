@@ -25,7 +25,11 @@
             *   `tabs/`: 编辑器内的具体功能标签页，如 `CharacterBasicData.vue`, `CharacterBook.vue`, `CharacterExtensions.vue`。
         *   `prompt/`: 提示词管理相关组件 (`PromptsTab.vue`)。
         *   `settings/`: 设置页面相关组件 (`MergedSettings.vue`)。
-    *   `src/views`: 存放页面级组件，通常一个文件对应一个路由页面。例如 `HomeView.vue`, `CharacterEditorView.vue`, `PresetEditorView.vue`, `FileManagerView.vue`。
+    *   `src/views`: 存放页面级组件，通常一个文件对应一个路由页面。
+        *   `HomeView.vue`: 应用的首页，作为功能选择的入口，提供导航到角色编辑器、预设对比编辑器和文件管理器。
+        *   `CharacterEditorView.vue`: 角色编辑器页面。
+        *   `PresetEditorView.vue`: 预设对比编辑器页面。
+        *   `FileManagerView.vue`: 文件管理页面。
     *   `src/store`: 存放使用 Pinia 进行状态管理的相关模块。目前包含 `dataManager.ts` 用于处理核心数据。
     *   `src/router`: 存放 Vue Router 的路由配置 (`index.ts`)。
     *   `src/main.ts`: 应用入口文件，负责初始化 Vue 实例和路由。
