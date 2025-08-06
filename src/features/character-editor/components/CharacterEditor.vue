@@ -11,10 +11,7 @@
         <CharacterDataEditor />
       </n-tab-pane>
 
-      <!-- 第三个标签页：编辑提示词 -->
-      <n-tab-pane name="prompts" tab="编辑提示词">
-        <PromptsTab :prompts="prompts" @update:prompts="updatePrompts" />
-      </n-tab-pane>
+
     </n-tabs>
   </div>
 </template>

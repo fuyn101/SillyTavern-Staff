@@ -1,8 +1,8 @@
 <template>
   <div class="home-view">
     <h1>功能选择</h1>
-<p style="margin-bottom: 20px; color: #888;">应用的首页，作为功能选择的入口，提供导航到角色编辑器、预设对比编辑器和文件管理器。</p>
-    <n-grid x-gap="20" y-gap="20" cols="1 s:2 m:3" responsive="screen" style="width: 80%; max-width: 1000px;">
+    <p style="margin-bottom: 20px; color: #888;">应用的首页，作为功能选择的入口，提供导航到角色编辑器、预设对比编辑器和文件管理器。</p>
+    <n-grid x-gap="20" y-gap="20" cols="1 s:2 m:3" responsive="screen">
       <n-grid-item>
         <router-link to="/editor" custom v-slot="{ navigate }">
           <n-card hoverable @click="navigate" class="action-card">
@@ -38,8 +38,9 @@
 </template>
 
 <script setup lang="ts">
-import { NGrid, NGridItem, NCard, NH3 } from 'naive-ui';
-import { RouterLink } from 'vue-router';
+// Components are auto-imported by unplugin-vue-components
+// import { NGrid, NGridItem, NCard, NH3 } from 'naive-ui';
+// import { RouterLink } from 'vue-router';
 </script>
 
 <style scoped>
@@ -47,14 +48,13 @@ import { RouterLink } from 'vue-router';
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 40px;
-  box-sizing: border-box;
-
+  text-align: center;
 }
 
 .action-card {
   cursor: pointer;
   transition: all 0.3s;
+  height: 100%;
 }
 
 .action-card:hover {
