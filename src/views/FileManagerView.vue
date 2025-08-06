@@ -41,7 +41,8 @@
         <n-card :title="preset.name">
           <template #action>
             <n-space>
-              <n-button @click="loadPreset(preset.name)">加载</n-button>
+              <n-button @click="loadPreset(preset.name, 'left')">加载到左侧</n-button>
+              <n-button @click="loadPreset(preset.name, 'right')">加载到右侧</n-button>
               <n-popconfirm @positive-click="deletePreset(preset.name)">
                 <template #trigger>
                   <n-button type="error">删除</n-button>
@@ -255,14 +256,17 @@ const toggleCardSelection = (name: string, checked: boolean) => {
 
 onMounted(refreshLists);
 
-const loadPreset = (name: string) => {
+const loadPreset = (name: string, side: 'left' | 'right') => {
   const preset = dataManager.loadPresetFromList(name);
   if (preset) {
     router.push({
-      name: 'TwoPageEditor',
-      state: { presetData: preset },
+      name: 'PresetEditor',
+      state: {
+        presetData: preset,
+        targetSide: side,
+      },
     });
-    message.success(`预设 ${name} 已加载，正在跳转到编辑器...`);
+    message.success(`预设 ${name} 已加载到 ${side === 'left' ? '左侧' : '右侧'}，正在跳转...`);
   } else {
     message.error('加载预设失败！');
   }
