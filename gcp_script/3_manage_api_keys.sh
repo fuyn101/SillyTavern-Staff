@@ -14,6 +14,7 @@
 # ===== 全局配置 =====
 TIMESTAMP=$(date +%s)
 SECONDS=0
+MAX_PARALLEL_JOBS=10
 
 # 文件和目录配置
 NEW_KEYS_CSV_FILE="newly_created_keys.csv"
@@ -70,6 +71,24 @@ check_prerequisites() {
     fi
     log "INFO" "前置检查通过。"
     return 0
+}
+
+# 检查单个项目是否有密钥的任务函数
+task_check_key() {
+    local project_id="$1"
+    local with_keys_file="$2"
+    local without_keys_file="$3"
+
+    local key_string
+    key_string=$(gcloud services api-keys list --project="$project_id" --format="value(keyString)" --limit=1 --quiet 2>/dev/null)
+
+    if [ -n "$key_string" ]; then
+        log "INFO" "项目 $project_id: 找到现有密钥。"
+        echo "$project_id" >> "$with_keys_file"
+    else
+        log "INFO" "项目 $project_id: 未找到密钥，将进行创建。"
+        echo "$project_id" >> "$without_keys_file"
+    fi
 }
 
 task_create_key() {
@@ -135,43 +154,54 @@ main() {
     local projects_array
     readarray -t projects_array <<< "$project_list"
 
-    local projects_to_create_for=()
-    local projects_with_keys=0
     local total_projects=${#projects_array[@]}
+    log "INFO" "找到 ${total_projects} 个项目。开始并行检查现有密钥..."
 
-    log "INFO" "找到 ${total_projects} 个项目。开始检查现有密钥..."
+    local PROJECTS_WITH_KEYS_TMP="${TEMP_DIR}/projects_with_keys.txt"
+    local PROJECTS_WITHOUT_KEYS_TMP="${TEMP_DIR}/projects_without_keys.txt"
+    touch "$PROJECTS_WITH_KEYS_TMP" "$PROJECTS_WITHOUT_KEYS_TMP"
 
+    export -f log task_check_key
+    
+    local job_count=0
     for project_id in "${projects_array[@]}"; do
-        local key_string
-        key_string=$(gcloud services api-keys list --project="$project_id" --format="value(keyString)" --limit=1 --quiet 2>/dev/null)
-
-        if [ -n "$key_string" ]; then
-            log "INFO" "项目 $project_id: 找到现有密钥。"
-            echo "$project_id" >> "$EXISTING_KEYS_LOG_FILE"
-            ((projects_with_keys++))
-        else
-            log "INFO" "项目 $project_id: 未找到密钥，将进行创建。"
-            projects_to_create_for+=("$project_id")
+        task_check_key "$project_id" "$PROJECTS_WITH_KEYS_TMP" "$PROJECTS_WITHOUT_KEYS_TMP" &
+        ((job_count++))
+        if [ "$job_count" -ge "$MAX_PARALLEL_JOBS" ]; then
+            wait -n
+            ((job_count--))
         fi
     done
+    wait
 
+    cat "$PROJECTS_WITH_KEYS_TMP" > "$EXISTING_KEYS_LOG_FILE"
+    local projects_with_keys
+    projects_with_keys=$(wc -l < "$EXISTING_KEYS_LOG_FILE")
+    
+    local projects_to_create_for
+    readarray -t projects_to_create_for < "$PROJECTS_WITHOUT_KEYS_TMP"
+    
     log "INFO" "检查完成。发现 ${projects_with_keys} 个项目已有密钥。"
 
     local projects_to_create_count=${#projects_to_create_for[@]}
     if [ $projects_to_create_count -eq 0 ]; then
         log "INFO" "没有需要创建新密钥的项目。"
     else
-        log "INFO" "将为 ${projects_to_create_count} 个项目创建新密钥。"
-        local successful_keys=0
+        log "INFO" "将为 ${projects_to_create_count} 个项目创建新密钥 (最多 ${MAX_PARALLEL_JOBS} 个并行任务)..."
+        
+        export -f log parse_json task_create_key
+        export NEW_KEYS_CSV_FILE TEMP_DIR
+
+        job_count=0
         for project_id in "${projects_to_create_for[@]}"; do
-            log "INFO" "正在为项目 $project_id 创建密钥..."
-            if task_create_key "$project_id"; then
-                log "INFO" "项目 $project_id 密钥创建成功。"
-                ((successful_keys++))
-            else
-                log "ERROR" "项目 $project_id 密钥创建失败。"
+            task_create_key "$project_id" &
+            ((job_count++))
+            if [ "$job_count" -ge "$MAX_PARALLEL_JOBS" ]; then
+                wait -n
+                ((job_count--))
             fi
         done
+        wait
     fi
 
     # 生成报告

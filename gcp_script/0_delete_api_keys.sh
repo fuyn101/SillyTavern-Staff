@@ -15,6 +15,7 @@ TIMESTAMP=$(date +%s)
 SECONDS=0
 
 # 文件和目录配置
+MAX_PARALLEL_JOBS=10
 TEMP_DIR="/tmp/gcp_script_${TIMESTAMP}"
 
 # 启动时创建临时目录
@@ -118,11 +119,19 @@ main() {
     fi
 
 
-    log "INFO" "开始串行删除API密钥..."
+    log "INFO" "开始并行删除API密钥 (最多 ${MAX_PARALLEL_JOBS} 个并行任务)..."
     
+    local job_count=0
     for project_id in "${projects_array[@]}"; do
-        task_cleanup_keys_for_project "$project_id"
+        task_cleanup_keys_for_project "$project_id" &
+        ((job_count++))
+        if [ "$job_count" -ge "$MAX_PARALLEL_JOBS" ]; then
+            wait -n
+            ((job_count--))
+        fi
     done
+
+    wait # 等待所有剩余的后台任务完成
 
     local duration=$SECONDS
     log "INFO" "======================================================"
@@ -133,6 +142,10 @@ main() {
 
 # ===== 程序入口 =====
 trap cleanup_resources EXIT SIGINT SIGTERM
+
+# 导出函数以供子进程使用
+export -f log task_cleanup_keys_for_project
+
 if ! check_prerequisites; then
     log "ERROR" "前置检查失败，程序退出。"
     exit 1

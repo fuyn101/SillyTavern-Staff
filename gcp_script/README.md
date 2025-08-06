@@ -51,19 +51,19 @@ chmod +x gcp_script/test.sh
 
 交互式主菜单，整合了所有功能，是推荐的入口点。
 
-### `0 delete_all_api_keys.sh`
+### `0_delete_api_keys.sh`
 
 清理脚本。遍历您账户下的所有 GCP 项目，并删除其中创建的所有 API 密钥。**这是一个危险操作，请谨慎使用。**
 
-### `1 create_random_projects.sh`
+### `1_create_projects.sh`
 
 项目创建脚本。根据您的输入（默认为 75 个）批量创建 GCP 项目。项目名称是随机生成的，以避免冲突。此脚本只创建项目，不进行其他操作。
 
-### `2 enable_all_projects_api.sh`
+### `2_enable_project_apis.sh`
 
 API 启用脚本。为账户下的所有项目批量启用 Gemini API (`generativelanguage.googleapis.com`, `geminicloudassist.googleapis.com`, `cloudaicompanion.googleapis.com`)。
 
-### `3 get_or_create_keys.sh`
+### `3_manage_api_keys.sh`
 
 密钥提取/创建脚本。遍历所有项目：
 *   如果项目已有 API 密钥，则直接读取并记录。
@@ -76,29 +76,27 @@ API 启用脚本。为账户下的所有项目批量启用 Gemini API (`generati
 
 **⚠️ 安全警告: 从互联网直接通过管道执行脚本可能存在安全风险。请确保您信任脚本的来源 (`fuyn101/SillyTavern-Staff`)。**
 
-**注意:** 当前仓库中的脚本文件名包含数字前缀和空格。以下是正确的远程执行命令。
+**注意:** 远程执行时，请使用 `bash <(curl -sSL ...)` 的方式，以确保脚本在交互式 Shell 中正确运行。
 
 ```bash
 # 远程执行主菜单脚本 (推荐)
 # 文件名: test.sh
-curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/test.sh" | bash
+bash <(curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/test.sh")
 
 # 远程执行密钥清理脚本 (危险)
-# 文件名: 0 delete_all_api_keys.sh
-curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/0%20delete_all_api_keys.sh" | bash
+# 文件名: 0_delete_api_keys.sh
+bash <(curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/0_delete_api_keys.sh")
 
 # 远程执行项目创建脚本
-# 文件名: 1 create_random_projects.sh
-curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/1%20create_random_projects.sh" | bash
+# 文件名: 1_create_projects.sh
+bash <(curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/1_create_projects.sh")
 
 # 远程执行 API 启用脚本
-# 文件名: 2 enable_all_projects_api.sh
-curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/2%20enable_all_projects_api.sh" | bash
+# 文件名: 2_enable_project_apis.sh
+bash <(curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/2_enable_project_apis.sh")
 
 # 远程执行密钥提取/创建脚本
-# 文件名: 3 get_or_create_keys.sh
-curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/3%20get_or_create_keys.sh" | bash
-
-
+# 文件名: 3_manage_api_keys.sh
+bash <(curl -sSL "https://raw.githubusercontent.com/fuyn101/SillyTavern-Staff/main/gcp_script/3_manage_api_keys.sh")
 ```
 **注意:** 远程执行时，脚本将在您的本地环境中运行，并使用您当前的 `gcloud` 身份验证信息。生成的文件（如 `key_all_projects.csv`）也会保存在您执行命令的当前目录。

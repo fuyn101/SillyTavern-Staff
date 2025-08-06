@@ -12,12 +12,14 @@
 # ===== 全局配置 =====
 TIMESTAMP=$(date +%s)
 SECONDS=0
+MAX_PARALLEL_JOBS=10
 # 需要启用的API列表
 APIS_TO_ENABLE=(
     "generativelanguage.googleapis.com"
     "geminicloudassist.googleapis.com"
     "cloudaicompanion.googleapis.com"
 )
+export APIS_TO_ENABLE
 
 # 文件和目录配置
 TEMP_DIR="/tmp/gcp_script_${TIMESTAMP}"
@@ -57,6 +59,22 @@ check_prerequisites() {
     return 0
 }
 
+# 为单个项目启用API的任务函数
+task_enable_apis_for_project() {
+    local project_id="$1"
+    local success_file="$2"
+    local failure_file="$3"
+
+    log "INFO" "正在为项目 '$project_id' 启用API..."
+    if gcloud services enable "${APIS_TO_ENABLE[@]}" --project="$project_id" --quiet; then
+        log "INFO" "成功为项目 '$project_id' 启用API。"
+        echo "$project_id" >> "$success_file"
+    else
+        log "ERROR" "为项目 '$project_id' 启用API失败。"
+        echo "$project_id" >> "$failure_file"
+    fi
+}
+
 # ===== 主功能函数 =====
 
 main() {
@@ -86,21 +104,28 @@ main() {
     log "INFO" "将为找到的 $total_projects 个项目自动启用API。"
     log "INFO" "在 3 秒后开始执行... (按 Ctrl+C 取消)"; sleep 3
 
-    local success_count=0
-    local failed_projects=()
+    local SUCCESS_FILE="${TEMP_DIR}/success.txt"
+    local FAILED_FILE="${TEMP_DIR}/failed.txt"
+    touch "$SUCCESS_FILE" "$FAILED_FILE"
 
+    log "INFO" "开始并行启用API (最多 ${MAX_PARALLEL_JOBS} 个并行任务)..."
+    
+    local job_count=0
     for project_id in "${ALL_PROJECT_IDS[@]}"; do
-        log "INFO" "--------------------------------------------------"
-        log "INFO" "正在为项目 '$project_id' 启用API..."
-        if gcloud services enable "${APIS_TO_ENABLE[@]}" --project="$project_id" --quiet; then
-            log "INFO" "成功为项目 '$project_id' 启用API。"
-            ((success_count++))
-        else
-            log "ERROR" "为项目 '$project_id' 启用API失败。"
-            failed_projects+=("$project_id")
+        task_enable_apis_for_project "$project_id" "$SUCCESS_FILE" "$FAILED_FILE" &
+        ((job_count++))
+        if [ "$job_count" -ge "$MAX_PARALLEL_JOBS" ]; then
+            wait -n
+            ((job_count--))
         fi
     done
 
+    wait # 等待所有剩余的后台任务完成
+
+    local success_count
+    success_count=$(wc -l < "$SUCCESS_FILE")
+    local failed_projects
+    readarray -t failed_projects < "$FAILED_FILE"
     local failed_count=${#failed_projects[@]}
 
     # 生成报告
@@ -119,6 +144,10 @@ main() {
 
 # ===== 程序入口 =====
 trap cleanup_resources EXIT SIGINT SIGTERM
+
+# 导出函数以供子进程使用
+export -f log task_enable_apis_for_project
+
 if ! check_prerequisites; then
     log "ERROR" "前置检查失败，程序退出。"
     exit 1

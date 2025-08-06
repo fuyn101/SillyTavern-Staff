@@ -19,6 +19,7 @@ RANDOM_PREFIX_PART=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -n 1)
 RANDOM_SUFFIX_PART=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1)
 PROJECT_PREFIX="${RANDOM_PREFIX_PART}Vul${RANDOM_SUFFIX_PART}"
 TOTAL_PROJECTS=75
+MAX_PARALLEL_JOBS=10
 MAX_RETRY_ATTEMPTS=3
 SECONDS=0
 
@@ -43,6 +44,20 @@ log() {
 
 cleanup_resources() {
     log "INFO" "执行退出清理..."; pkill -P $$ &>/dev/null; rm -rf "$TEMP_DIR";
+}
+
+# 创建单个项目的任务函数
+task_create_project() {
+    local project_id="$1"
+    local created_projects_file="$2"
+    
+    log "INFO" "正在创建项目: $project_id"
+    if gcloud projects create "$project_id" --name="$project_id" --no-set-as-default --quiet; then
+        log "INFO" "成功创建项目: $project_id"
+        echo "$project_id" >> "$created_projects_file"
+    else
+        log "ERROR" "创建项目失败: $project_id"
+    fi
 }
 
 # ===== 主功能函数 =====
@@ -86,22 +101,22 @@ main() {
     
     # 创建项目
     local CREATED_PROJECTS_FILE="${TEMP_DIR}/created_projects_only.txt"
+    export CREATED_PROJECTS_FILE
     > "$CREATED_PROJECTS_FILE"
     
-    local created_project_ids=()
-    local failed_project_ids=()
-
+    log "INFO" "开始并行创建项目 (最多 ${MAX_PARALLEL_JOBS} 个并行任务)..."
+    
+    local job_count=0
     for project_id in "${projects_to_create[@]}"; do
-        log "INFO" "正在创建项目: $project_id"
-        if gcloud projects create "$project_id" --name="$project_id" --no-set-as-default --quiet; then
-            log "INFO" "成功创建项目: $project_id"
-            echo "$project_id" >> "$CREATED_PROJECTS_FILE"
-            created_project_ids+=("$project_id")
-        else
-            log "ERROR" "创建项目失败: $project_id"
-            failed_project_ids+=("$project_id")
+        task_create_project "$project_id" "$CREATED_PROJECTS_FILE" &
+        ((job_count++))
+        if [ "$job_count" -ge "$MAX_PARALLEL_JOBS" ]; then
+            wait -n
+            ((job_count--))
         fi
     done
+
+    wait # 等待所有剩余的后台任务完成
     
     if [ -f "$CREATED_PROJECTS_FILE" ]; then
         mapfile -t created_project_ids < "$CREATED_PROJECTS_FILE"
@@ -140,6 +155,10 @@ check_prerequisites() {
 
 # ===== 程序入口 =====
 trap cleanup_resources EXIT SIGINT SIGTERM
+
+# 导出函数以供子进程使用
+export -f log task_create_project
+
 if ! check_prerequisites; then 
     log "ERROR" "前置检查失败，程序退出。"
     exit 1
