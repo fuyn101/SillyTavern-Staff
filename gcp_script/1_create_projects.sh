@@ -19,7 +19,6 @@ RANDOM_PREFIX_PART=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 5 | head -n 1)
 RANDOM_SUFFIX_PART=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1)
 PROJECT_PREFIX="${RANDOM_PREFIX_PART}Vul${RANDOM_SUFFIX_PART}"
 TOTAL_PROJECTS=75
-MAX_PARALLEL_JOBS=40
 MAX_RETRY_ATTEMPTS=3
 SECONDS=0
 
@@ -48,18 +47,21 @@ cleanup_resources() {
 
 # ===== 主功能函数 =====
 
-create_projects_only() {
+main() {
     SECONDS=0
     log "INFO" "======================================================"
     log "INFO" "功能: 仅创建项目（不提取API密钥）"
     log "INFO" "======================================================"
     log "INFO" "使用随机生成的用户名: ${EMAIL_USERNAME}"
     
-    # 询问要创建的项目数量
-    # 检查是否在交互式终端中运行，并从/dev/tty读取以确保健壮性
-    if [ -t 0 ]; then
-      read -p "请输入要创建的项目数量 (1-75，默认为$TOTAL_PROJECTS): " custom_count < /dev/tty
+    # 检查是否在交互式终端中运行
+    if ! [ -t 0 ]; then
+        log "ERROR" "此脚本只能在交互式终端中运行。"
+        return 1
     fi
+    
+    # 询问要创建的项目数量
+    read -p "请输入要创建的项目数量 (1-75，默认为$TOTAL_PROJECTS): " custom_count < /dev/tty
     custom_count=${custom_count:-$TOTAL_PROJECTS}
     
     if ! [[ "$custom_count" =~ ^[1-9][0-9]*$ ]] || [ "$custom_count" -gt 75 ]; then
@@ -143,7 +145,7 @@ if ! check_prerequisites; then
     exit 1
 fi
 
-create_projects_only
+main
 
 log "INFO" "脚本执行完毕。"
 exit 0
