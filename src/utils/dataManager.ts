@@ -3,6 +3,7 @@ import defaultJson from '@/assets/default.json'
 
 // 完整的林凰JSON数据结构
 export interface CharacterData {
+  avatar_data_url?: string
   name: string
   description: string
   personality: string
@@ -105,8 +106,10 @@ export interface CharacterData {
 const defaultData: CharacterData = defaultJson as CharacterData
 
 // 响应式数据存储
-const CharData = reactive<CharacterData>(JSON.parse(JSON.stringify(defaultData)))
-const originalData = reactive<CharacterData>(JSON.parse(JSON.stringify(defaultData)))
+const storedData = localStorage.getItem('linhuang_full_data')
+const initialData = storedData ? JSON.parse(storedData) : defaultData
+const CharData = reactive<CharacterData>(JSON.parse(JSON.stringify(initialData)))
+const originalData = reactive<CharacterData>(JSON.parse(JSON.stringify(initialData)))
 
 // 数据管理器
 export const useDataManager = () => {
@@ -131,6 +134,8 @@ export const useDataManager = () => {
   const setFullData = (data: CharacterData) => {
     Object.assign(CharData, data)
     Object.assign(originalData, data)
+    // 当设置新数据时，也更新localStorage
+    localStorage.setItem('linhuang_full_data', JSON.stringify(data))
   }
 
   // 设置基础数据

@@ -6,15 +6,18 @@
     </n-space>
     <n-list bordered>
       <n-list-item v-for="card in cardList" :key="card.name">
-        <n-card :title="card.name">
-          <p>{{ card.description }}</p>
-          <template #action>
-            <n-space>
-              <n-button @click="loadCard(card.name)">加载</n-button>
-              <n-button type="error" @click="deleteCard(card.name)">删除</n-button>
-            </n-space>
-          </template>
-        </n-card>
+        <div class="card-layout">
+          <img :src="card.avatar_data_url" v-if="card.avatar_data_url" class="side-avatar">
+          <n-card :title="card.name" class="card-content">
+            <p>{{ card.description }}</p>
+            <template #action>
+              <n-space>
+                <n-button @click="loadCard(card.name)">加载</n-button>
+                <n-button type="error" @click="deleteCard(card.name)">删除</n-button>
+              </n-space>
+            </template>
+          </n-card>
+        </div>
       </n-list-item>
     </n-list>
   </div>
@@ -47,9 +50,15 @@ const handleFileUpload = (event: Event) => {
       try {
         const cardData = extractDataFromPng(arrayBuffer)
         if (cardData) {
-          dataManager.saveCardToList(cardData as any)
-          refreshList()
-          message.success('角色卡导入成功！')
+          const fileReaderForDataUrl = new FileReader();
+          fileReaderForDataUrl.onload = (e_du) => {
+            const dataUrl = e_du.target?.result as string;
+            (cardData as any).avatar_data_url = dataUrl;
+            dataManager.saveCardToList(cardData as any)
+            refreshList()
+            message.success('角色卡导入成功！')
+          };
+          fileReaderForDataUrl.readAsDataURL(file);
         } else {
           message.error('未在此PNG文件中找到角色卡数据。')
         }
@@ -139,5 +148,19 @@ onMounted(() => {
 <style scoped>
 .file-manager-container {
   padding: 24px;
+}
+.card-layout {
+  display: flex;
+  align-items: flex-start;
+}
+.side-avatar {
+  width: 128px; /* 512/4 */
+  height: 192px; /* 768/4 */
+  object-fit: cover;
+  margin-right: 24px;
+  border-radius: 4px;
+}
+.card-content {
+  flex: 1;
 }
 </style>

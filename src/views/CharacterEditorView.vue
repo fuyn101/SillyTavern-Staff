@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import CharacterBasicEditor from '@/components/char/CharacterBasicEditor.vue'
 import CharacterDataEditor from '@/components/char/CharacterDataEditor.vue'
 import JsonPreviewContent from '@/components/char/JsonPreviewContent.vue'
@@ -54,10 +54,16 @@ const handleFileUpload = (event: Event) => {
       try {
         const cardData = extractDataFromPng(arrayBuffer)
         if (cardData) {
-          dataManager.setFullData(cardData as any)
-          dataManager.saveCardToList(cardData as any)
-          updateJsonDisplay()
-          message.success('角色卡导入成功！')
+          const fileReaderForDataUrl = new FileReader();
+          fileReaderForDataUrl.onload = (e_du) => {
+            const dataUrl = e_du.target?.result as string;
+            (cardData as any).avatar_data_url = dataUrl;
+            dataManager.setFullData(cardData as any)
+            dataManager.saveCardToList(cardData as any)
+            updateJsonDisplay()
+            message.success('角色卡导入成功！')
+          };
+          fileReaderForDataUrl.readAsDataURL(file);
         } else {
           message.error('未在此PNG文件中找到角色卡数据。')
         }
@@ -164,6 +170,14 @@ onMounted(() => {
     window.removeEventListener('char-data-changed', handleDataChange)
   })
 })
+
+watch(
+  () => dataManager.linhuangData,
+  () => {
+    updateJsonDisplay()
+  },
+  { deep: true }
+)
 </script>
 
 <style scoped>
