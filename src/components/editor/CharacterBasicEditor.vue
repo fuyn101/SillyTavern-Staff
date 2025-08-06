@@ -148,7 +148,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import type { FormInst, FormRules } from 'naive-ui'
-import { useDataManager } from '@/utils/dataManager'
+import { useDataManager } from '@/store/dataManager'
 
 const formRef = ref<FormInst | null>(null)
 

@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useDataManager } from '@/utils/dataManager'
+import { useDataManager } from '@/store/dataManager'
 import { useMessage } from 'naive-ui'
 
 defineProps({

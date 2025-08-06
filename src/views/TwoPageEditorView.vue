@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { NSplit } from 'naive-ui';
-import MainComponent from '@/components/MainComponent.vue';
+import MainComponent from '@/components/common/MainComponent.vue';
 
 const leftComponent = ref<InstanceType<typeof MainComponent> | null>(null);
 const rightComponent = ref<InstanceType<typeof MainComponent> | null>(null);
