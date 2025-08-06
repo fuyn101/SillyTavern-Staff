@@ -13,7 +13,16 @@
         <n-input v-model:value="formData.character_version" placeholder="请输入角色版本" />
       </n-form-item-gi>
       <n-form-item-gi :span="12" label="标签" path="tags">
-        <n-dynamic-tags v-model:value="formData.tags" />
+        <n-dynamic-tags v-model:value="formData.tags">
+          <template #trigger="{ activate, disabled }">
+            <n-button size="small" type="primary" dashed :disabled="disabled" @click="activate">
+              <template #icon>
+                <n-icon><add-icon /></n-icon>
+              </template>
+              添加
+            </n-button>
+          </template>
+        </n-dynamic-tags>
       </n-form-item-gi>
     </n-grid>
 
@@ -66,8 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { NGrid, NFormItemGi, NInput, NDynamicTags, NSpace, NH4, NDynamicInput } from 'naive-ui';
-
+import { Add as AddIcon } from '@vicons/ionicons5';
 defineProps<{
   formData: any
 }>();

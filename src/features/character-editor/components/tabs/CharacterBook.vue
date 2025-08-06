@@ -1,8 +1,8 @@
 <template>
-  <n-space vertical size="large">
-    <n-form-item-gi label="世界书名称" path="character_book.name">
+  <n-space v-if="formData.character_book" vertical size="large">
+    <n-form-item label="世界书名称" path="character_book.name">
       <n-input v-model:value="formData.character_book.name" placeholder="请输入世界书名称" />
-    </n-form-item-gi>
+    </n-form-item>
 
     <n-h4 prefix="bar">条目</n-h4>
     <n-dynamic-input
@@ -10,10 +10,11 @@
       :on-create="handleCharacterBookAdd"
       #="{ value: entry, index }"
     >
-      <n-collapse-item :title="entry.comment || `条目 ${index + 1}`" :name="entry.id" style="width: 100%">
-        <n-space vertical>
-          <!-- 核心内容 -->
-          <n-grid :cols="12" :x-gap="12" :y-gap="8">
+      <n-collapse>
+        <n-collapse-item :title="entry.comment || `条目 ${index + 1}`" :name="entry.id" style="width: 100%">
+          <n-space vertical>
+            <!-- 核心内容 -->
+            <n-grid :cols="12" :x-gap="12" :y-gap="8">
             <n-form-item-gi :span="12" label="条目名称 (注释)">
               <n-input v-model:value="entry.comment" />
             </n-form-item-gi>
@@ -53,16 +54,27 @@
           </n-grid>
         </n-space>
       </n-collapse-item>
+    </n-collapse>
     </n-dynamic-input>
   </n-space>
 </template>
 
 <script setup lang="ts">
-import { NGrid, NFormItemGi, NInput, NInputNumber, NSwitch, NDynamicTags, NDynamicInput, NSpace, NH4, NCollapseItem, NSelect } from 'naive-ui';
+import { onMounted } from 'vue';
+import { NGrid, NFormItemGi, NInput, NInputNumber, NSwitch, NDynamicTags, NDynamicInput, NSpace, NH4, NCollapse, NCollapseItem, NSelect, NFormItem } from 'naive-ui';
 
-defineProps<{
+const props = defineProps<{
   formData: any
 }>();
+
+onMounted(() => {
+  if (!props.formData.character_book) {
+    props.formData.character_book = {
+      name: '',
+      entries: []
+    };
+  }
+});
 
 const positionOptions = [
   { label: '角色前', value: 'before_char' },

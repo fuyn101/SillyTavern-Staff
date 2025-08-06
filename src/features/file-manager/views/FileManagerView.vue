@@ -1,13 +1,11 @@
 <template>
   <div class="file-manager-container">
-    <n-h1>文件管理器</n-h1>
+    <n-h1>角色卡管理器</n-h1>
     <n-space style="margin-bottom: 24px;">
       <n-button @click="triggerPngImport">导入PNG角色卡</n-button>
       <input type="file" ref="pngUploader" @change="handlePngUpload" accept="image/png" style="display: none;" />
       <n-button @click="triggerJsonImport">导入JSON角色卡</n-button>
       <input type="file" ref="jsonUploader" @change="handleJsonUpload" accept=".json" style="display: none;" multiple />
-      <n-button @click="triggerPresetImport">导入预设</n-button>
-      <input type="file" ref="presetUploader" @change="handlePresetUpload" accept=".json" style="display: none;" />
       <n-button @click="exportSelectedCardsAsJson" :disabled="selectedCards.length === 0">导出为JSON</n-button>
       <n-button @click="exportSelectedCardsAsPng" :disabled="selectedCards.length === 0">导出为PNG</n-button>
       <n-popconfirm @positive-click="deleteSelectedCards">
@@ -36,6 +34,10 @@
     </n-list>
 
     <n-h1 style="margin-top: 40px;">预设管理器</n-h1>
+    <n-space style="margin-bottom: 24px;">
+        <n-button @click="triggerPresetImport">导入预设</n-button>
+        <input type="file" ref="presetUploader" @change="handlePresetUpload" accept=".json" style="display: none;" />
+    </n-space>
     <n-list bordered>
       <n-list-item v-for="preset in presetList" :key="preset.name">
         <n-card :title="preset.name">

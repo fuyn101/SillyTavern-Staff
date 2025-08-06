@@ -1,5 +1,5 @@
 <template>
-  <n-space vertical size="large">
+  <n-space v-if="formData.extensions" vertical size="large">
     <!-- 通用拓展 -->
     <n-h4 prefix="bar">通用拓展</n-h4>
     <n-grid :cols="12" :x-gap="24" :y-gap="8">
@@ -37,6 +37,7 @@
     <n-dynamic-input
       v-model:value="formData.extensions.regex_scripts"
       :on-create="handleCreateRegexScript"
+      v-if="formData.extensions"
       #="{ value: script, index }"
     >
       <n-card :title="script.scriptName || `脚本 ${index + 1}`" size="small" style="width: 100%">
@@ -78,12 +79,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { NGrid, NFormItemGi, NInput, NInputNumber, NSwitch, NDynamicTags, NDynamicInput, NSpace, NH4, NCard } from 'naive-ui';
 
 const props = defineProps<{
   formData: any
 }>();
+
+onMounted(() => {
+  if (!props.formData.extensions) {
+    props.formData.extensions = {
+      talkativeness: '0.5',
+      fav: false,
+      world: '',
+      depth_prompt: {
+        prompt: '',
+        depth: 1,
+        role: ''
+      },
+      regex_scripts: []
+    };
+  }
+});
 
 const extensionsTalkativenessNumber = computed(() => {
   const stringValue = props.formData.extensions?.talkativeness;

@@ -171,6 +171,83 @@ export const useDataManager = defineStore('dataManager', () => {
     updatePresetEditorData(side, presetData);
   };
 
+  // --- Character Card List Management ---
+  const getCardList = (): CharacterData[] => {
+    const list = localStorage.getItem('character_card_list');
+    return list ? JSON.parse(list) : [];
+  };
+
+  const saveCardToList = (card: CharacterData) => {
+    const list = getCardList();
+    const existingIndex = list.findIndex(c => c.name === card.name);
+    if (existingIndex > -1) {
+      list[existingIndex] = card;
+    } else {
+      list.push(card);
+    }
+    localStorage.setItem('character_card_list', JSON.stringify(list));
+  };
+
+  const loadCardFromList = (name: string): boolean => {
+    const list = getCardList();
+    const card = list.find(c => c.name === name);
+    if (card) {
+      setFullData(card);
+      return true;
+    }
+    return false;
+  };
+
+  const deleteCardFromList = (name: string) => {
+    let list = getCardList();
+    list = list.filter(c => c.name !== name);
+    localStorage.setItem('character_card_list', JSON.stringify(list));
+  };
+  
+  const getCardsByNames = (names: string[]): CharacterData[] => {
+    const list = getCardList();
+    return list.filter(c => names.includes(c.name));
+  };
+
+  const deleteCardsFromList = (names: string[]) => {
+    let list = getCardList();
+    list = list.filter(c => !names.includes(c.name));
+    localStorage.setItem('character_card_list', JSON.stringify(list));
+  };
+
+  const clearAllCards = () => {
+    localStorage.setItem('character_card_list', JSON.stringify([]));
+  };
+
+  // --- Preset List Management ---
+  const getPresetList = (): any[] => {
+    const list = localStorage.getItem('preset_list');
+    return list ? JSON.parse(list) : [];
+  };
+
+  const savePresetToList = (preset: any, name: string) => {
+    const list = getPresetList();
+    const existingIndex = list.findIndex(p => p.name === name);
+    const presetWithName = { ...preset, name };
+    if (existingIndex > -1) {
+      list[existingIndex] = presetWithName;
+    } else {
+      list.push(presetWithName);
+    }
+    localStorage.setItem('preset_list', JSON.stringify(list));
+  };
+
+  const loadPresetFromList = (name: string): any | null => {
+    const list = getPresetList();
+    return list.find(p => p.name === name) || null;
+  };
+
+  const deletePresetFromList = (name: string) => {
+    let list = getPresetList();
+    list = list.filter(p => p.name !== name);
+    localStorage.setItem('preset_list', JSON.stringify(list));
+  };
+
   return {
     characterData,
     prompts,
@@ -184,5 +261,18 @@ export const useDataManager = defineStore('dataManager', () => {
     exportToJson,
     updatePresetEditorData,
     loadPresetToEditor,
+    // Card List
+    getCardList,
+    saveCardToList,
+    loadCardFromList,
+    deleteCardFromList,
+    getCardsByNames,
+    deleteCardsFromList,
+    clearAllCards,
+    // Preset List
+    getPresetList,
+    savePresetToList,
+    loadPresetFromList,
+    deletePresetFromList,
   };
 });

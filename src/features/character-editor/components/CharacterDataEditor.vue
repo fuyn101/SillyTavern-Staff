@@ -25,13 +25,14 @@
         <CharacterBook :formData="formData" />
       </n-card>
     </n-space>
+    <n-button @click="saveData" type="primary" style="margin-top: 24px;">保存更改</n-button>
   </n-form>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import type { FormInst } from 'naive-ui';
-import { useDataManager } from '@/store/dataManager';
+import { useDataManager, type CharacterData } from '@/store/dataManager';
 import CharacterBasicData from './tabs/CharacterBasicData.vue';
 import CharacterExtensions from './tabs/CharacterExtensions.vue';
 import CharacterBook from './tabs/CharacterBook.vue';
@@ -39,11 +40,19 @@ import { NForm, NSpace, NCard, NDivider } from 'naive-ui';
 
 const formRef = ref<FormInst | null>(null);
 const dataManager = useDataManager();
-const formData = computed(() => dataManager.characterData.data);
+const formData = reactive<CharacterData['data']>({} as CharacterData['data']);
 
-watch(formData, () => {
-  // Logic for data change can be added here
+onMounted(() => {
+  Object.assign(formData, JSON.parse(JSON.stringify(dataManager.characterData.data)));
+});
+
+watch(() => dataManager.characterData.data, (newData) => {
+  Object.assign(formData, JSON.parse(JSON.stringify(newData)));
 }, { deep: true });
+
+const saveData = () => {
+  dataManager.characterData.data = JSON.parse(JSON.stringify(formData));
+};
 </script>
 
 <style scoped>

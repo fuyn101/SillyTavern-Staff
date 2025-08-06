@@ -109,17 +109,28 @@
         </n-grid>
       </n-card>
     </n-space>
+    <n-button @click="saveData" type="primary" style="margin-top: 24px;">保存更改</n-button>
   </n-form>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import type { FormInst, FormRules } from 'naive-ui'
-import { useDataManager } from '@/store/dataManager'
+import { useDataManager, type CharacterData } from '@/store/dataManager'
+import { NForm, NSpace, NCard, NGrid, NFormItemGi, NInput, NDynamicTags, NDivider, NInputNumber, NSwitch } from 'naive-ui'
 
 const formRef = ref<FormInst | null>(null)
 const dataManager = useDataManager()
-const formData = computed(() => dataManager.characterData)
+const formData = reactive<CharacterData>({} as CharacterData);
+
+onMounted(() => {
+  Object.assign(formData, JSON.parse(JSON.stringify(dataManager.characterData)));
+});
+
+watch(() => dataManager.characterData, (newData) => {
+  Object.assign(formData, JSON.parse(JSON.stringify(newData)));
+}, { deep: true });
+
 
 const formRules: FormRules = {
   name: { required: true, message: '请输入角色名称', trigger: 'blur' },
@@ -127,17 +138,17 @@ const formRules: FormRules = {
 }
 
 const talkativenessNumber = computed(() => {
-  const stringValue = formData.value.talkativeness
+  const stringValue = formData.talkativeness
   return typeof stringValue === 'string' ? parseFloat(stringValue) || 0.5 : stringValue || 0.5
 })
 
 const updateTalkativeness = (value: number | null) => {
-  formData.value.talkativeness = value === null ? '0.5' : value.toString()
+  formData.talkativeness = value === null ? '0.5' : value.toString()
 }
 
-watch(formData, () => {
-  // Logic to handle data changes can be added here if needed
-}, { deep: true })
+const saveData = () => {
+  dataManager.setFullData(JSON.parse(JSON.stringify(formData)));
+};
 
 </script>
 
