@@ -328,6 +328,24 @@ export const useDataManager = () => {
     return false
   }
 
+  // 根据名称获取多个角色卡
+  const getCardsByNames = (cardNames: string[]): CharacterData[] => {
+    const list = getCardList()
+    return list.filter(c => cardNames.includes(c.name))
+  }
+
+  // 从列表中删除多个角色卡
+  const deleteCardsFromList = (cardNames: string[]) => {
+    let list = getCardList()
+    list = list.filter(c => !cardNames.includes(c.name))
+    localStorage.setItem('character_cards', JSON.stringify(list))
+  }
+
+  // 清空所有角色卡
+  const clearAllCards = () => {
+    localStorage.setItem('character_cards', JSON.stringify([]))
+  }
+
   return {
     linhuangData: CharData,
     getFullData,
@@ -349,5 +367,8 @@ export const useDataManager = () => {
     saveCardToList,
     deleteCardFromList,
     loadCardFromList,
+    getCardsByNames,
+    deleteCardsFromList,
+    clearAllCards,
   }
 }

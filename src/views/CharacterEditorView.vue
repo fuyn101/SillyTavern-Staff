@@ -28,10 +28,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import CharacterBasicEditor from '@/components/char/CharacterBasicEditor.vue'
-import CharacterDataEditor from '@/components/char/CharacterDataEditor.vue'
+import CharacterBasicEditor from '@/components/editor/CharacterBasicEditor.vue'
+import CharacterDataEditor from '@/components/editor/CharacterDataEditor.vue'
 import JsonPreviewContent from '@/components/char/JsonPreviewContent.vue'
-import { useDataManager } from '@/utils/dataManager'
+import { useDataManager } from '@/store/dataManager'
 import { useMessage } from 'naive-ui'
 
 const dataManager = useDataManager()

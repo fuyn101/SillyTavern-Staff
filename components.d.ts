@@ -8,15 +8,15 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    Breadcrumb: typeof import('./src/components/Breadcrumb.vue')['default']
-    CharacterBasicData: typeof import('./src/components/char/tabs/CharacterBasicData.vue')['default']
-    CharacterBasicEditor: typeof import('./src/components/char/CharacterBasicEditor.vue')['default']
-    CharacterBook: typeof import('./src/components/char/tabs/CharacterBook.vue')['default']
-    CharacterDataEditor: typeof import('./src/components/char/CharacterDataEditor.vue')['default']
-    CharacterExtensions: typeof import('./src/components/char/tabs/CharacterExtensions.vue')['default']
-    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    Breadcrumb: typeof import('./src/components/layout/Breadcrumb.vue')['default']
+    CharacterBasicData: typeof import('./src/components/editor/tabs/CharacterBasicData.vue')['default']
+    CharacterBasicEditor: typeof import('./src/components/editor/CharacterBasicEditor.vue')['default']
+    CharacterBook: typeof import('./src/components/editor/tabs/CharacterBook.vue')['default']
+    CharacterDataEditor: typeof import('./src/components/editor/CharacterDataEditor.vue')['default']
+    CharacterExtensions: typeof import('./src/components/editor/tabs/CharacterExtensions.vue')['default']
+    HelloWorld: typeof import('./src/components/common/HelloWorld.vue')['default']
     JsonPreviewContent: typeof import('./src/components/char/JsonPreviewContent.vue')['default']
-    MainComponent: typeof import('./src/components/MainComponent.vue')['default']
+    MainComponent: typeof import('./src/components/common/MainComponent.vue')['default']
     MergedSettings: typeof import('./src/components/settings/MergedSettings.vue')['default']
     NBreadcrumb: typeof import('naive-ui')['NBreadcrumb']
     NBreadcrumbItem: typeof import('naive-ui')['NBreadcrumbItem']

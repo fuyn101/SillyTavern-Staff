@@ -30,10 +30,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import type { FormInst, FormRules } from 'naive-ui'
-import { useDataManager } from '@/utils/dataManager'
-import CharacterBasicData from '@/components/char/tabs/CharacterBasicData.vue'
-import CharacterExtensions from '@/components/char/tabs/CharacterExtensions.vue'
-import CharacterBook from '@/components/char/tabs/CharacterBook.vue'
+import { useDataManager } from '@/store/dataManager'
+import CharacterBasicData from '@/components/editor/tabs/CharacterBasicData.vue'
+import CharacterExtensions from '@/components/editor/tabs/CharacterExtensions.vue'
+import CharacterBook from '@/components/editor/tabs/CharacterBook.vue'
 
 const formRef = ref<FormInst | null>(null)
 

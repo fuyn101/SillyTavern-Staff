@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import Breadcrumb from "@/components/Breadcrumb.vue";
-import { darkTheme } from "naive-ui";
+import { darkTheme, NConfigProvider, NMessageProvider, NNotificationProvider, NDialogProvider, NLoadingBarProvider, NSpace, NButton } from "naive-ui";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 </script>
 
 <template>
@@ -10,7 +12,12 @@ import { darkTheme } from "naive-ui";
         <n-dialog-provider>
           <n-loading-bar-provider>
             <div class="app">
-              <Breadcrumb />
+              <n-space style="padding: 12px;">
+                <n-button @click="router.push('/')">主页</n-button>
+                <n-button @click="router.push('/editor')">编辑器</n-button>
+                <n-button @click="router.push('/two-page-editor')">双页编辑器</n-button>
+                <n-button @click="router.push('/file-manager')">文件管理</n-button>
+              </n-space>
               <router-view />
             </div>
           </n-loading-bar-provider>

@@ -2,11 +2,28 @@
   <div class="file-manager-container">
     <n-h1>文件管理器</n-h1>
     <n-space style="margin-bottom: 24px;">
-      <input type="file" @change="handleFileUpload" accept="image/png" />
+      <n-button @click="triggerPngImport">导入PNG角色卡</n-button>
+      <input type="file" ref="pngUploader" @change="handleFileUpload" accept="image/png" style="display: none;" />
+      <n-button @click="triggerJsonImport">导入JSON角色卡</n-button>
+      <input type="file" ref="jsonUploader" @change="handleJsonUpload" accept=".json" style="display: none;" multiple />
+      <n-button @click="exportSelectedCards" :disabled="selectedCards.length === 0">导出所选</n-button>
+      <n-popconfirm @positive-click="deleteSelectedCards">
+        <template #trigger>
+          <n-button type="error" :disabled="selectedCards.length === 0">删除所选</n-button>
+        </template>
+        确定要删除所选的 {{ selectedCards.length }} 个角色卡吗？
+      </n-popconfirm>
+      <n-popconfirm @positive-click="clearAllCards">
+        <template #trigger>
+          <n-button type="error" danger>清空所有</n-button>
+        </template>
+        确定要删除所有角色卡吗？此操作不可逆！
+      </n-popconfirm>
     </n-space>
     <n-list bordered>
       <n-list-item v-for="card in cardList" :key="card.name">
         <div class="card-layout">
+          <n-checkbox :value="card.name" @update:checked="toggleCardSelection(card.name, $event)" style="margin-right: 16px;" />
           <img :src="card.avatar_data_url" v-if="card.avatar_data_url" class="side-avatar">
           <n-card :title="card.name" class="card-content">
             <p>{{ card.description }}</p>
@@ -25,17 +42,22 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useDataManager, type CharacterData } from '@/utils/dataManager'
-import { useMessage } from 'naive-ui'
+import { useDataManager, type CharacterData } from '@/store/dataManager'
+import { useMessage, NButton, NSpace, NList, NListItem, NCard, NH1, NCheckbox, NPopconfirm } from 'naive-ui'
 import { useRouter } from 'vue-router'
 
 const dataManager = useDataManager()
 const router = useRouter()
 const message = useMessage()
 const cardList = ref<CharacterData[]>([])
+const selectedCards = ref<string[]>([])
+const pngUploader = ref<HTMLInputElement | null>(null)
+const jsonUploader = ref<HTMLInputElement | null>(null)
+
 
 const refreshList = () => {
   cardList.value = dataManager.getCardList()
+  selectedCards.value = []
 }
 
 const handleFileUpload = (event: Event) => {
@@ -138,6 +160,71 @@ const deleteCard = (name: string) => {
   dataManager.deleteCardFromList(name)
   message.success(`已删除角色卡: ${name}`)
   refreshList()
+}
+
+const triggerPngImport = () => {
+  pngUploader.value?.click()
+}
+
+const triggerJsonImport = () => {
+  jsonUploader.value?.click()
+}
+
+const handleJsonUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (!files) return
+
+  for (const file of files) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target?.result as string)
+        dataManager.saveCardToList(json)
+        message.success(`成功导入 ${file.name}`)
+        refreshList()
+      } catch (error) {
+        message.error(`导入 ${file.name} 失败`)
+        console.error(error)
+      }
+    }
+    reader.readAsText(file)
+  }
+}
+
+const exportSelectedCards = () => {
+  const cardsToExport = dataManager.getCardsByNames(selectedCards.value)
+  const dataStr = JSON.stringify(cardsToExport, null, 2)
+  const dataBlob = new Blob([dataStr], { type: 'application/json' })
+  const url = URL.createObjectURL(dataBlob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'selected_cards.json'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+  message.success('已导出所选角色卡')
+}
+
+const deleteSelectedCards = () => {
+  dataManager.deleteCardsFromList(selectedCards.value)
+  message.success('已删除所选角色卡')
+  refreshList()
+}
+
+const clearAllCards = () => {
+  dataManager.clearAllCards()
+  message.success('已清空所有角色卡')
+  refreshList()
+}
+
+const toggleCardSelection = (name: string, checked: boolean) => {
+  if (checked) {
+    selectedCards.value.push(name)
+  } else {
+    selectedCards.value = selectedCards.value.filter(cardName => cardName !== name)
+  }
 }
 
 onMounted(() => {
