@@ -30,7 +30,8 @@ MAX_RETRY_GLOBAL=1
 SECONDS=0
 
 # 文件和目录配置
-KEY_CSV_FILE="key.csv"
+PURE_KEY_FILE="key.txt"
+COMMA_SEPARATED_KEY_FILE="comma_separated_keys_${EMAIL_USERNAME}.txt"
 DELETION_LOG="project_deletion_$(date +%Y%m%d_%H%M%S).log"
 CLEANUP_LOG="api_keys_cleanup_$(date +%Y%m%d_%H%M%S).log"
 TEMP_DIR="/tmp/gcp_script_${TIMESTAMP}"
@@ -136,17 +137,15 @@ parse_json() {
 
 # 文件写入函数 (带文件锁)
 write_keys_to_files() {
-    local project_id="$1"
-    local api_key="$2"
-    if [[ -z "$project_id" || -z "$api_key" ]]; then return 1; fi
+    local api_key="$1"
+    if [[ -z "$api_key" ]]; then return 1; fi
     (
         if flock -w 10 200; then
-            # 如果文件不存在或为空，写入表头
-            if [[ ! -f "$KEY_CSV_FILE" || ! -s "$KEY_CSV_FILE" ]]; then
-                echo "projectid,keys" > "$KEY_CSV_FILE"
+            echo "$api_key" >> "$PURE_KEY_FILE"
+            if [[ -s "$COMMA_SEPARATED_KEY_FILE" ]]; then
+                echo -n "," >> "$COMMA_SEPARATED_KEY_FILE"
             fi
-            # 写入项目ID和密钥
-            echo "$project_id,$api_key" >> "$KEY_CSV_FILE"
+            echo -n "$api_key" >> "$COMMA_SEPARATED_KEY_FILE"
         else
             log "ERROR" "写入文件失败: 获取文件锁超时"
             return 1
@@ -198,11 +197,8 @@ generate_report() {
     printf "  操作类型    : %s\n" "$operation"; printf "  总计尝试    : %d\n" "$total"; printf "  成功数量    : %d\n" "$success";
     printf "  失败数量    : %d\n" "$failed"; printf "  成功率      : %.2f%%\n" "$success_rate"; printf "  总执行时间  : %d小时 %d分钟 %d秒\n" "$h" "$m" "$s"
     if (( success > 0 )) && [[ "$operation" == *"密钥"* ]]; then
-        local key_count; key_count=$(wc -l < "$KEY_CSV_FILE" 2>/dev/null || echo 0)
-        if (( key_count > 1 )); then
-            key_count=$((key_count - 1))  # 减去表头行
-        fi
-        echo; echo "  输出文件:"; echo "  - CSV密钥文件   : $KEY_CSV_FILE ($key_count 个密钥)"
+        local key_count; key_count=$(wc -l < "$PURE_KEY_FILE" 2>/dev/null || echo 0)
+        echo; echo "  输出文件:"; echo "  - 纯密钥文件    : $PURE_KEY_FILE ($key_count 个密钥)"; echo "  - 逗号分隔文件  : $COMMA_SEPARATED_KEY_FILE"
     fi
     echo "================================================================"
 }
@@ -218,7 +214,7 @@ task_create_project() {
 
 task_enable_api() {
     local project_id="$1"; local success_file="$2"
-    if retry_with_backoff "$MAX_RETRY_ATTEMPTS" "gcloud services enable generativelanguage.googleapis.com geminicloudassist.googleapis.com cloudaicompanion.googleapis.com --project=\"$project_id\" --quiet"; then
+    if retry_with_backoff "$MAX_RETRY_ATTEMPTS" "gcloud services enable generativelanguage.googleapis.com --project=\"$project_id\" --quiet"; then
         (flock 200; echo "$project_id" >> "$success_file";) 200>"${success_file}.lock"; return 0
     else return 1; fi
 }
@@ -235,7 +231,7 @@ task_create_key() {
     # ===== END OF FIX =====
 
     if [[ -n "$api_key" ]]; then
-        write_keys_to_files "$project_id" "$api_key"; (flock 200; echo "$project_id" >> "$success_file";) 200>"${success_file}.lock"; return 0
+        write_keys_to_files "$api_key"; (flock 200; echo "$project_id" >> "$success_file";) 200>"${success_file}.lock"; return 0
     else
         log "ERROR" "为项目 $project_id 提取密钥失败 (无法解析 .response.keyString)。"; log "DEBUG" "gcloud返回内容: $create_output"; return 1
     fi
@@ -256,6 +252,7 @@ task_cleanup_keys() {
     local all_success=true
     for key_name in "${key_names[@]}"; do
         if ! retry_with_backoff 2 "gcloud services api-keys delete \"$key_name\" --quiet"; then all_success=false; fi
+        sleep 0.5
     done
     if $all_success; then (flock 200; echo "$project_id" >> "$success_file";) 200>"${success_file}.lock"; return 0; else return 1; fi
 }
@@ -270,32 +267,18 @@ run_parallel() {
     local task_func="$1"; local description="$2"; local success_file="$3"; shift 3; local items=("$@"); local total_items=${#items[@]}
     if (( total_items == 0 )); then log "INFO" "在 '$description' 阶段无项目处理。"; return; fi
     log "INFO" "开始并行执行 '$description' (最大并发: $MAX_PARALLEL_JOBS)..."
-    local completed_count=0; local job_count=0
-    
-    # 导出必要的函数和变量
-    export -f log retry_with_backoff parse_json write_keys_to_files "$task_func" show_progress list_existing_api_keys
-    export MAX_RETRY_ATTEMPTS TEMP_DIR KEY_CSV_FILE
-    
+    local pids=(); local completed_count=0
+    export -f log retry_with_backoff parse_json write_keys_to_files "$task_func" show_progress; export MAX_RETRY_ATTEMPTS PURE_KEY_FILE COMMA_SEPARATED_KEY_FILE TEMP_DIR
     > "$success_file"
-    
-    for item in "${items[@]}"; do
-        ( "$task_func" "$item" "$success_file" ) &
-        ((job_count++))
-        if (( job_count >= MAX_PARALLEL_JOBS )); then
-            wait -n
-            ((job_count--)); ((completed_count++))
+    for i in "${!items[@]}"; do
+        if (( ${#pids[@]} >= MAX_PARALLEL_JOBS )); then
+            wait -n "${pids[@]}"; for j in "${!pids[@]}"; do if ! kill -0 "${pids[j]}" 2>/dev/null; then unset 'pids[j]'; ((completed_count++)); fi; done
             show_progress "$completed_count" "$total_items" "$description"
         fi
+        ( "$task_func" "${items[i]}" "$success_file" ) & pids+=($!)
     done
-    
-    while (( job_count > 0 )); do
-        wait -n
-        ((job_count--)); ((completed_count++))
-        show_progress "$completed_count" "$total_items" "$description"
-    done
-    
-    wait
-    show_progress "$total_items" "$total_items" "$description 完成"
+    for pid in "${pids[@]}"; do wait "$pid"; ((completed_count++)); show_progress "$completed_count" "$total_items" "$description"; done
+    wait; show_progress "$total_items" "$total_items" "$description 完成"
     local success_count; success_count=$(wc -l < "$success_file" | xargs); local fail_count=$((total_items - success_count))
     echo; log "INFO" "阶段 '$description' 完成。总数: $total_items, 成功: $success_count, 失败: $fail_count"
 }
@@ -326,7 +309,7 @@ create_projects_phased() {
         if [ $retry_count -eq 0 ]; then
             check_quota || return 1
             log "INFO" "将创建 $projects_to_create_count 个新项目。用户名: $EMAIL_USERNAME, 项目前缀: $PROJECT_PREFIX"
-            > "$KEY_CSV_FILE"
+            > "$PURE_KEY_FILE"; > "$COMMA_SEPARATED_KEY_FILE"
         else
             log "INFO" "==================== 全局重试 (第 $retry_count 次) ===================="
             log "INFO" "将重新创建 $projects_to_create_count 个失败的项目"
@@ -410,10 +393,7 @@ create_projects_phased() {
         echo
         log "INFO" "==================== 最终统计 ===================="
         local total_keys
-        total_keys=$(wc -l < "$KEY_CSV_FILE" 2>/dev/null || echo 0)
-        if (( total_keys > 1 )); then
-            total_keys=$((total_keys - 1))  # 减去表头行
-        fi
+        total_keys=$(wc -l < "$PURE_KEY_FILE" 2>/dev/null || echo 0)
         log "INFO" "总共成功获取密钥数: $total_keys"
         log "INFO" "执行了 $retry_count 次全局重试"
     fi
@@ -532,40 +512,24 @@ list_existing_api_keys() {
         fi
     fi
     
-    # 检查是否是权限错误
-    if grep -q "PERMISSION_DENIED" "$error_log" 2>/dev/null; then
-        log "WARN" "项目 $project_id 没有API密钥列表权限，将跳过"
-        rm -f "$error_log"
-        return 1
-    fi
-    
     rm -f "$error_log"
     return 1
-}
-
-# 任务：检查项目是否有密钥，如果没有，则将其添加到待处理列表
-task_check_keys_and_add() {
-    local project_id="$1"; local target_file="$2"
-    # list_existing_api_keys 如果找到密钥则返回0，否则返回1
-    if ! list_existing_api_keys "$project_id" >/dev/null 2>&1; then
-        (flock 200; echo "$project_id" >> "$target_file";) 200>"${target_file}.lock"
-    fi
-    # 无论项目是否有密钥，此检查任务本身都算成功
-    return 0
 }
 
 extract_keys_from_existing_projects() {
     SECONDS=0; log "INFO" "==================== 功能2: 从现有项目中提取密钥 ===================="
     log "INFO" "正在获取项目列表..."; local project_list; project_list=$(gcloud projects list --format='value(projectId)' --filter='projectId!~^sys-' --quiet)
     if [ -z "$project_list" ]; then log "INFO" "未找到任何用户项目。"; return 0; fi
-    local projects_array; readarray -t projects_array <<< "$project_list"; > "$KEY_CSV_FILE"
-    
-    local projects_to_process=()
-    local PROJECTS_TO_PROCESS_FILE="${TEMP_DIR}/projects_to_process.txt"
-    run_parallel task_check_keys_and_add "检查项目密钥状态" "$PROJECTS_TO_PROCESS_FILE" "${projects_array[@]}"
-    mapfile -t projects_to_process < "$PROJECTS_TO_PROCESS_FILE"
-
-    if [ ${#projects_to_process[@]} -eq 0 ]; then log "INFO" "所有项目均已有密钥，或无法访问的项目已被跳过。无需创建新密钥。"; return 0; fi
+    local projects_array; readarray -t projects_array <<< "$project_list"; > "$PURE_KEY_FILE"; > "$COMMA_SEPARATED_KEY_FILE"
+    local projects_to_process=(); log "INFO" "正在检查 ${#projects_array[@]} 个项目的密钥状态..."
+    start_heartbeat "检查密钥状态..." 10
+    for project_id in "${projects_array[@]}"; do
+        if ! gcloud services api-keys list --project="$project_id" --format="value(name)" --quiet | grep -q "."; then
+            projects_to_process+=("$project_id")
+        fi
+    done
+    stop_heartbeat
+    if [ ${#projects_to_process[@]} -eq 0 ]; then log "INFO" "所有项目均已有密钥，无需操作。"; return 0; fi
     log "INFO" "将为 ${#projects_to_process[@]} 个没有密钥的项目创建新密钥。"
     read -p "确认继续吗? [y/N]: " r; [[ "$r" =~ ^[Yy]$ ]] || { log "INFO" "操作已取消。"; return 1; }
     local ENABLED_PROJECTS_FILE="${TEMP_DIR}/existing_enabled.txt"; run_parallel task_enable_api "启用API" "$ENABLED_PROJECTS_FILE" "${projects_to_process[@]}"
