@@ -17,10 +17,10 @@ const router = createRouter({
 
     },
     {
-      path: '/editor-main',
-      name: 'MainEditorView',
-      component: () => import('@/views/MainEditorView.vue'),
-      meta: { breadcrumb: 'Main Editor' }
+      path: '/preset-editor',
+      name: 'PresetEditorView',
+      component: () => import('@/views/PresetEditorView.vue'),
+      meta: { breadcrumb: 'Preset Editor' }
     },
     {
       path: '/file-manager',
