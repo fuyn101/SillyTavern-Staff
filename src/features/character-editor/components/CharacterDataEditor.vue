@@ -31,9 +31,9 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import type { FormInst, FormRules } from 'naive-ui'
 import { useDataManager } from '@/store/dataManager'
-import CharacterBasicData from '@/components/editor/tabs/CharacterBasicData.vue'
-import CharacterExtensions from '@/components/editor/tabs/CharacterExtensions.vue'
-import CharacterBook from '@/components/editor/tabs/CharacterBook.vue'
+import CharacterBasicData from './tabs/CharacterBasicData.vue'
+import CharacterExtensions from './tabs/CharacterExtensions.vue'
+import CharacterBook from './tabs/CharacterBook.vue'
 
 const formRef = ref<FormInst | null>(null)
 

@@ -21,9 +21,9 @@
 
 <script setup lang="ts">
 import { NTabs, NTabPane } from 'naive-ui';
-import CharacterBasicEditor from '@/components/editor/CharacterBasicEditor.vue';
-import CharacterDataEditor from '@/components/editor/CharacterDataEditor.vue';
-import PromptsTab from '@/components/prompt/PromptsTab.vue';
+import CharacterBasicEditor from './CharacterBasicEditor.vue';
+import CharacterDataEditor from './CharacterDataEditor.vue';
+import PromptsTab from './PromptsTab.vue';
 import { useDataManager } from '@/store/dataManager';
 import { storeToRefs } from 'pinia';
 

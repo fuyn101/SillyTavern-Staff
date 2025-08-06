@@ -12,26 +12,26 @@ const router = createRouter({
     {
       path: '/editor',
       name: 'EditorView',
-      component: () => import('@/views/CharacterEditorView.vue'),
+      component: () => import('@/features/character-editor/views/CharacterEditorView.vue'),
       meta: { breadcrumb: 'Editor' },
 
     },
     {
       path: '/preset-editor',
       name: 'PresetEditorView',
-      component: () => import('@/views/PresetEditorView.vue'),
+      component: () => import('@/features/preset-editor/views/PresetEditorView.vue'),
       meta: { breadcrumb: 'Preset Editor' }
     },
     {
       path: '/file-manager',
       name: 'FileManager',
-      component: () => import('@/views/FileManagerView.vue'),
+      component: () => import('@/features/file-manager/views/FileManagerView.vue'),
       meta: { breadcrumb: 'File Manager' }
     },
     {
       path: '/two-page-editor',
       name: 'TwoPageEditor',
-      component: () => import('@/views/PresetEditorView.vue'),
+      component: () => import('@/features/preset-editor/views/PresetEditorView.vue'),
       meta: { breadcrumb: '预设对比编辑器' }
     }
   ],

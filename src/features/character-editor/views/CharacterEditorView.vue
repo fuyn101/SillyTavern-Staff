@@ -13,8 +13,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
 import { NLayout, NLayoutHeader, NLayoutContent, NH1 } from 'naive-ui';
-import CharacterEditor from '@/components/editor/CharacterEditor.vue';
-import CharacterPreview from '@/components/character/CharacterPreview.vue';
+import CharacterEditor from '@/features/character-editor/components/CharacterEditor.vue';
+import CharacterPreview from '@/features/character-editor/components/CharacterPreview.vue';
 import { useDataManager } from '@/store/dataManager';
 
 const dataManager = useDataManager();

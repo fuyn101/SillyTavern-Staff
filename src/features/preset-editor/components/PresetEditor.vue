@@ -5,7 +5,7 @@
         <prompts-tab :prompts="jsonData.prompts" :order="jsonData.prompt_order" @update:prompts="updatePrompts" @update:order="updateOrder" />
       </n-tab-pane>
       <n-tab-pane name="settings" tab="设置">
-        <merged-settings :settings="jsonData" @update:settings="updateSettings" />
+        <prompt-settings :settings="jsonData" @update:settings="updateSettings" />
       </n-tab-pane>
     </n-tabs>
     <template #action>
@@ -20,8 +20,8 @@
 <script setup lang="ts">
 import { reactive, watch, toRefs } from 'vue';
 import { NCard, NTabs, NTabPane, NButton } from 'naive-ui';
-import PromptsTab from '@/components/prompt/PromptsTab.vue';
-import MergedSettings from '@/components/settings/MergedSettings.vue';
+import PromptsTab from '@/features/character-editor/components/PromptsTab.vue';
+import PromptSettings from '@/components/prompt/PromptSettings.vue';
 import { useFileSystem } from '@/composables/useFileSystem';
 import defaultPreset from '@/assets/Default prompt.json';
 import { useDataManager } from '@/store/dataManager';

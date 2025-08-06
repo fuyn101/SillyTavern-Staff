@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { NSplit } from 'naive-ui';
-import PresetEditor from '@/components/editor/PresetEditor.vue';
+import PresetEditor from '@/features/preset-editor/components/PresetEditor.vue';
 import { useDataManager } from '@/store/dataManager';
 import { storeToRefs } from 'pinia';
 
