@@ -13,6 +13,7 @@ declare module 'vue' {
     CharacterBook: typeof import('./src/components/char/tabs/CharacterBook.vue')['default']
     CharacterDataEditor: typeof import('./src/components/char/CharacterDataEditor.vue')['default']
     CharacterExtensions: typeof import('./src/components/char/tabs/CharacterExtensions.vue')['default']
+    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     JsonPreviewContent: typeof import('./src/components/char/JsonPreviewContent.vue')['default']
     NButton: typeof import('naive-ui')['NButton']
     NCard: typeof import('naive-ui')['NCard']
