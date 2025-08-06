@@ -6,7 +6,8 @@
       <input type="file" ref="pngUploader" @change="handleFileUpload" accept="image/png" style="display: none;" />
       <n-button @click="triggerJsonImport">导入JSON角色卡</n-button>
       <input type="file" ref="jsonUploader" @change="handleJsonUpload" accept=".json" style="display: none;" multiple />
-      <n-button @click="exportSelectedCards" :disabled="selectedCards.length === 0">导出所选</n-button>
+      <n-button @click="exportSelectedCardsAsJson" :disabled="selectedCards.length === 0">导出为JSON</n-button>
+      <n-button @click="exportSelectedCardsAsPng" :disabled="selectedCards.length === 0">导出为PNG</n-button>
       <n-popconfirm @positive-click="deleteSelectedCards">
         <template #trigger>
           <n-button type="error" :disabled="selectedCards.length === 0">删除所选</n-button>
@@ -54,6 +55,23 @@ const selectedCards = ref<string[]>([])
 const pngUploader = ref<HTMLInputElement | null>(null)
 const jsonUploader = ref<HTMLInputElement | null>(null)
 
+const crc32 = (function() {
+    const table = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+        let c = i;
+        for (let k = 0; k < 8; k++) {
+            c = (c & 1) ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+        }
+        table[i] = c;
+    }
+    return function(bytes: Uint8Array): number {
+        let crc = 0xFFFFFFFF;
+        for (let i = 0; i < bytes.length; i++) {
+            crc = table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+        }
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+    };
+})();
 
 const refreshList = () => {
   cardList.value = dataManager.getCardList()
@@ -192,9 +210,13 @@ const handleJsonUpload = (event: Event) => {
   }
 }
 
-const exportSelectedCards = () => {
+const exportSelectedCardsAsJson = () => {
   const cardsToExport = dataManager.getCardsByNames(selectedCards.value)
-  const dataStr = JSON.stringify(cardsToExport, null, 2)
+  if (cardsToExport.length === 0) {
+    message.warning('没有选择任何角色卡。')
+    return
+  }
+  const dataStr = JSON.stringify(cardsToExport.length === 1 ? cardsToExport[0] : cardsToExport, null, 2)
   const dataBlob = new Blob([dataStr], { type: 'application/json' })
   const url = URL.createObjectURL(dataBlob)
   const link = document.createElement('a')
@@ -204,8 +226,121 @@ const exportSelectedCards = () => {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
-  message.success('已导出所选角色卡')
+  message.success('已导出所选角色卡为JSON')
 }
+
+const exportSelectedCardsAsPng = async () => {
+  const cardsToExport = dataManager.getCardsByNames(selectedCards.value);
+  if (cardsToExport.length === 0) {
+    message.warning('没有选择任何角色卡。');
+    return;
+  }
+
+  for (const card of cardsToExport) {
+    if (!card.avatar_data_url) {
+      message.error(`角色卡 "${card.name}" 没有头像，无法导出为PNG。`);
+      continue;
+    }
+    try {
+      const pngBlob = await embedDataInPng(card);
+      const url = URL.createObjectURL(pngBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${card.name}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      message.success(`已成功导出 "${card.name}" 为PNG文件。`);
+    } catch (error) {
+      message.error(`导出 "${card.name}" 时出错: ${error}`);
+      console.error(error);
+    }
+  }
+};
+
+const embedDataInPng = (card: CharacterData): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('无法获取Canvas上下文'));
+      }
+      ctx.drawImage(img, 0, 0);
+
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      const cardDataToEmbed = { ...card };
+      delete cardDataToEmbed.avatar_data_url;
+      const jsonString = JSON.stringify(cardDataToEmbed);
+      
+      const base64Png = dataUrl.split(',')[1];
+      const binaryPng = atob(base64Png);
+      const arrayBuffer = new ArrayBuffer(binaryPng.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < binaryPng.length; i++) {
+        uint8Array[i] = binaryPng.charCodeAt(i);
+      }
+
+      const dataView = new DataView(uint8Array.buffer);
+      let offset = 8;
+      let iendOffset = -1;
+
+      while (offset < dataView.byteLength) {
+        const length = dataView.getUint32(offset);
+        const type = String.fromCharCode(
+          dataView.getUint8(offset + 4),
+          dataView.getUint8(offset + 5),
+          dataView.getUint8(offset + 6),
+          dataView.getUint8(offset + 7)
+        );
+        if (type === 'IEND') {
+          iendOffset = offset;
+          break;
+        }
+        offset += 12 + length;
+      }
+
+      if (iendOffset === -1) {
+        return reject(new Error('无法找到PNG的IEND块'));
+      }
+
+      const textEncoder = new TextEncoder();
+      const key = 'ccv3';
+      const value = btoa(unescape(encodeURIComponent(jsonString)));
+      const textChunkData = textEncoder.encode(key + '\0' + value);
+      
+      const chunkTypeAndData = new Uint8Array(4 + textChunkData.length);
+      chunkTypeAndData.set(textEncoder.encode('tEXt'), 0);
+      chunkTypeAndData.set(textChunkData, 4);
+      
+      const crc = crc32(chunkTypeAndData);
+
+      const textChunk = new Uint8Array(12 + textChunkData.length);
+      const textChunkView = new DataView(textChunk.buffer);
+
+      textChunkView.setUint32(0, textChunkData.length);
+      textChunk.set(chunkTypeAndData, 4);
+      textChunkView.setUint32(8 + textChunkData.length, crc);
+
+      const newPngData = new Uint8Array(uint8Array.length + textChunk.length);
+      newPngData.set(uint8Array.subarray(0, iendOffset));
+      newPngData.set(textChunk, iendOffset);
+      newPngData.set(uint8Array.subarray(iendOffset), iendOffset + textChunk.length);
+
+      resolve(new Blob([newPngData], { type: 'image/png' }));
+    };
+    img.onerror = () => {
+      reject(new Error('无法加载角色头像图片。'));
+    };
+    img.src = card.avatar_data_url!;
+  });
+};
 
 const deleteSelectedCards = () => {
   dataManager.deleteCardsFromList(selectedCards.value)

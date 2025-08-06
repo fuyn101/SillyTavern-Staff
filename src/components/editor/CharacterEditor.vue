@@ -2,7 +2,6 @@
   <n-layout>
     <n-layout-header>
       <n-h1>角色卡编辑器</n-h1>
-      <input type="file" @change="handleFileUpload" accept="image/png" />
     </n-layout-header>
     <n-layout-content content-style="padding: 24px;">
       <n-tabs type="line" animated @update:value="handleTabChange">
@@ -16,6 +15,10 @@
           <CharacterDataEditor ref="dataEditorRef" />
         </n-tab-pane>
       </n-tabs>
+
+      <n-card title="角色卡 JSON 预览" style="margin-top: 24px;">
+        <n-code :code="jsonData" language="json" show-line-numbers />
+      </n-card>
     </n-layout-content>
   </n-layout>
 </template>
@@ -25,106 +28,12 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import CharacterBasicEditor from '@/components/editor/CharacterBasicEditor.vue'
 import CharacterDataEditor from '@/components/editor/CharacterDataEditor.vue'
 import { useDataManager } from '@/store/dataManager'
-import { useMessage } from 'naive-ui'
 
 const dataManager = useDataManager()
 const jsonData = ref<string>('')
 const basicContentEditorRef = ref<InstanceType<typeof CharacterBasicEditor> | null>(null)
 const dataEditorRef = ref<InstanceType<typeof CharacterDataEditor> | null>(null)
 const activeTab = ref<string>('BasicContent')
-const message = useMessage()
-
-// 处理文件上传
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const arrayBuffer = e.target?.result as ArrayBuffer
-    if (arrayBuffer) {
-      try {
-        const cardData = extractDataFromPng(arrayBuffer)
-        if (cardData) {
-          const fileReaderForDataUrl = new FileReader();
-          fileReaderForDataUrl.onload = (e_du) => {
-            const dataUrl = e_du.target?.result as string;
-            (cardData as any).avatar_data_url = dataUrl;
-            dataManager.setFullData(cardData as any)
-            dataManager.saveCardToList(cardData as any)
-            updateJsonDisplay()
-            message.success('角色卡导入成功！')
-          };
-          fileReaderForDataUrl.readAsDataURL(file);
-        } else {
-          message.error('未在此PNG文件中找到角色卡数据。')
-        }
-      } catch (error) {
-        message.error('导入失败，文件可能已损坏或格式不正确。')
-        console.error('导入PNG时出错:', error)
-      }
-    }
-  }
-  reader.readAsArrayBuffer(file)
-}
-
-// 从PNG ArrayBuffer中提取数据
-const extractDataFromPng = (arrayBuffer: ArrayBuffer): object | null => {
-  const view = new DataView(arrayBuffer)
-  // 检查PNG签名
-  if (view.getUint32(0) !== 0x89504e47 || view.getUint32(4) !== 0x0d0a1a0a) {
-    throw new Error('不是有效的PNG文件。')
-  }
-
-  let offset = 8
-  while (offset < view.byteLength) {
-    const length = view.getUint32(offset)
-    const type = String.fromCharCode(
-      view.getUint8(offset + 4),
-      view.getUint8(offset + 5),
-      view.getUint8(offset + 6),
-      view.getUint8(offset + 7)
-    )
-
-    if (type === 'tEXt') {
-      const chunkDataOffset = offset + 8
-      const chunkData = new Uint8Array(arrayBuffer, chunkDataOffset, length)
-      
-      let nullIndex = -1;
-      for (let i = 0; i < chunkData.length; i++) {
-          if (chunkData[i] === 0) {
-              nullIndex = i;
-              break;
-          }
-      }
-
-      if (nullIndex !== -1) {
-          const keyDecoder = new TextDecoder('ascii');
-          const key = keyDecoder.decode(chunkData.subarray(0, nullIndex));
-
-          if (key === 'ccv3') {
-              const base64Data = keyDecoder.decode(chunkData.subarray(nullIndex + 1));
-              const binaryString = atob(base64Data);
-              const bytes = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
-              }
-              
-              const utf8Decoder = new TextDecoder('utf-8');
-              const jsonString = utf8Decoder.decode(bytes);
-              
-              return JSON.parse(jsonString);
-          }
-      }
-    }
-
-    offset += 12 + length // 移动到下一个块 (4字节长度 + 4字节类型 + 数据 + 4字节CRC)
-  }
-
-  return null
-}
-
 
 // 处理标签页切换
 const handleTabChange = (name: string | number) => {

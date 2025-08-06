@@ -2,7 +2,7 @@
   <div class="home-view">
     <h1>功能选择</h1>
     <n-button type="primary" @click="goToEditor">角色编辑器</n-button>
-    <n-button type="primary" @click="goToTwoPageEditor" style="margin-top: 12px;">双页编辑器</n-button>
+    <n-button type="primary" @click="goToTwoPageEditor" style="margin-top: 12px;">预设对比编辑器</n-button>
     <n-button type="primary" @click="goToFileManager" style="margin-top: 12px;">文件管理器</n-button>
   </div>
 </template>

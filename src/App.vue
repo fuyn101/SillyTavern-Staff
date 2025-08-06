@@ -15,7 +15,7 @@ const router = useRouter();
               <n-space style="padding: 12px;">
                 <n-button @click="router.push('/')">主页</n-button>
                 <n-button @click="router.push('/editor')">编辑器</n-button>
-                <n-button @click="router.push('/two-page-editor')">双页编辑器</n-button>
+                <n-button @click="router.push('/two-page-editor')">预设对比编辑器</n-button>
                 <n-button @click="router.push('/file-manager')">文件管理</n-button>
               </n-space>
               <router-view />

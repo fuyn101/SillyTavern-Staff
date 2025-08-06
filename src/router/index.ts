@@ -27,6 +27,12 @@ const router = createRouter({
       name: 'FileManager',
       component: () => import('@/views/FileManagerView.vue'),
       meta: { breadcrumb: 'File Manager' }
+    },
+    {
+      path: '/two-page-editor',
+      name: 'TwoPageEditor',
+      component: () => import('@/views/PresetEditorView.vue'),
+      meta: { breadcrumb: '预设对比编辑器' }
     }
   ],
 })
