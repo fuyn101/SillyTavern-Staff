@@ -5,12 +5,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/editor'
+      name: 'HomeView',
+      component: () => import('@/views/HomeView.vue')
     },
     {
       path: '/editor',
       name: 'EditorView',
       component: () => import('@/views/CharacterEditorView.vue')
+    },
+    {
+      path: '/two-page-editor',
+      name: 'TwoPageEditorView',
+      component: () => import('@/views/TwoPageEditorView.vue')
     }
   ],
 })
