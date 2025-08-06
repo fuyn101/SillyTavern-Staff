@@ -107,12 +107,12 @@ watch(
   display: flex;
   flex-direction: column;
   height: calc(100vh - 64px);
-  padding: 24px;
 }
 
 .editor-content {
   flex-grow: 1;
   overflow-y: auto;
+  padding: 24px;
 }
 
 .editor-tabs {

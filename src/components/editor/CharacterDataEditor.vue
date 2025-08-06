@@ -122,43 +122,35 @@ defineExpose({
 </script>
 
 <style scoped>
-.unified-editor {
+.n-form {
   background-color: transparent;
 }
 
-.unified-editor :deep(.n-card) {
-  background-color: var(--tertiary-bg-color);
-}
-
-.unified-editor :deep(.n-form-item) {
+:deep(.n-form-item) {
   margin-bottom: 4px;
 }
 
-.unified-editor :deep(.n-card__content) {
-  padding: 12px;
-}
-
-.unified-editor :deep(.n-input) {
+:deep(.n-input) {
   --n-height: 28px;
 }
 
-.unified-editor :deep(.n-input-number) {
+:deep(.n-input-number) {
   --n-height: 28px;
 }
 
-.unified-editor :deep(.n-dynamic-tags) {
+:deep(.n-dynamic-tags) {
   --n-height: 28px;
 }
 
-.unified-editor :deep(.n-tabs-nav) {
+:deep(.n-tabs-nav) {
   padding: 4px 0;
 }
 
-.unified-editor :deep(.n-tab-pane) {
+:deep(.n-tab-pane) {
   padding: 8px 0;
 }
 
-.unified-editor :deep(.n-space) {
+:deep(.n-space) {
   --n-gap: 8px;
 }
 </style>
