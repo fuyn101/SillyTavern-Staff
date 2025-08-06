@@ -1,27 +1,11 @@
 <template>
   <n-layout style="height: 100%">
     <n-layout-header bordered class="editor-header">
-      <n-space align="center">
-        <n-h2 style="margin: 0;">角色卡编辑器</n-h2>
-        <n-button-group>
-          <n-button 
-            :type="activeTab === 'basic' ? 'primary' : 'default'" 
-            @click="activeTab = 'basic'"
-          >
-            编辑基础内容
-          </n-button>
-          <n-button 
-            :type="activeTab === 'data' ? 'primary' : 'default'" 
-            @click="activeTab = 'data'"
-          >
-            编辑Data
-          </n-button>
-        </n-button-group>
-      </n-space>
+      <n-h2 style="margin: 0;">角色卡编辑器</n-h2>
       <n-button @click="showJsonPreview = true">预览 JSON</n-button>
     </n-layout-header>
     <n-layout-content style="height: 90%;">
-      <character-editor :active-tab="activeTab" />
+      <router-view />
     </n-layout-content>
   </n-layout>
 
@@ -43,12 +27,9 @@ import {
   NLayoutContent, 
   NH2, 
   NButton,
-  NButtonGroup,
-  NSpace,
   NModal, 
   NCode 
 } from 'naive-ui';
-import CharacterEditor from '@/features/character-editor/components/CharacterEditor.vue';
 import { useDataManager } from '@/store/dataManager';
 import { storeToRefs } from 'pinia';
 
@@ -56,7 +37,6 @@ const dataManager = useDataManager();
 const { characterData } = storeToRefs(dataManager);
 const jsonData = ref('');
 const showJsonPreview = ref(false);
-const activeTab = ref('basic');
 
 const updateJsonDisplay = () => {
   try {

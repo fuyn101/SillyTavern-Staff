@@ -14,16 +14,17 @@ import {
   NIcon, 
   NButton 
 } from "naive-ui";
-import { useRouter, RouterLink } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import { useThemeStore } from './store/theme';
 import {
   HomeOutline as HomeIcon,
   CreateOutline as EditorIcon,
   GitCompareOutline as CompareIcon,
-  FolderOpenOutline as FileManagerIcon
+  FolderOpenOutline as FileManagerIcon,
+  DocumentTextOutline as BasicIcon,
+  CodeSlashOutline as DataIcon
 } from '@vicons/ionicons5';
 
-const router = useRouter();
 const themeStore = useThemeStore();
 
 function renderIcon(icon: Component) {
@@ -37,9 +38,21 @@ const menuOptions = [
     icon: renderIcon(HomeIcon)
   },
   {
-    label: () => h(RouterLink, { to: '/editor' }, { default: () => '角色编辑器' }),
+    label: '角色编辑器',
     key: 'editor',
-    icon: renderIcon(EditorIcon)
+    icon: renderIcon(EditorIcon),
+    children: [
+      {
+        label: () => h(RouterLink, { to: '/editor/basic' }, { default: () => '编辑基础内容' }),
+        key: 'editor-basic',
+        icon: renderIcon(BasicIcon)
+      },
+      {
+        label: () => h(RouterLink, { to: '/editor/data' }, { default: () => '编辑Data' }),
+        key: 'editor-data',
+        icon: renderIcon(DataIcon)
+      }
+    ]
   },
   {
     label: () => h(RouterLink, { to: '/two-page-editor' }, { default: () => '预设对比编辑器' }),
