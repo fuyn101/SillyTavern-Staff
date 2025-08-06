@@ -1,5 +1,5 @@
 <template>
-  <n-split v-if="dataManager.presetsReady.value" direction="horizontal" style="height: 100vh">
+  <n-split v-if="presetsReady" direction="horizontal" style="height: 100vh">
     <template #1>
       <preset-editor side="left" />
     </template>
@@ -16,6 +16,8 @@
 import { NSplit } from 'naive-ui';
 import PresetEditor from '@/components/editor/PresetEditor.vue';
 import { useDataManager } from '@/store/dataManager';
+import { storeToRefs } from 'pinia';
 
 const dataManager = useDataManager();
+const { presetsReady } = storeToRefs(dataManager);
 </script>

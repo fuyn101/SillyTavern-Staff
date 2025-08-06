@@ -10,6 +10,11 @@
       <n-tab-pane name="data" tab="编辑data">
         <CharacterDataEditor />
       </n-tab-pane>
+
+      <!-- 第三个标签页：编辑提示词 -->
+      <n-tab-pane name="prompts" tab="编辑提示词">
+        <PromptsTab :prompts="prompts" :order="order" @update:prompts="updatePrompts" @update:order="updateOrder" />
+      </n-tab-pane>
     </n-tabs>
   </div>
 </template>
@@ -18,9 +23,20 @@
 import { NTabs, NTabPane } from 'naive-ui';
 import CharacterBasicEditor from '@/components/editor/CharacterBasicEditor.vue';
 import CharacterDataEditor from '@/components/editor/CharacterDataEditor.vue';
+import PromptsTab from '@/components/prompt/PromptsTab.vue';
+import { useDataManager } from '@/store/dataManager';
+import { storeToRefs } from 'pinia';
 
-// Logic has been moved to the parent view CharacterEditorView.vue
-// This component is now only responsible for rendering the tabs.
+const dataManager = useDataManager();
+const { prompts, order } = storeToRefs(dataManager);
+
+const updatePrompts = (newPrompts: any[]) => {
+  dataManager.updatePrompts(newPrompts);
+};
+
+const updateOrder = (newOrder: any[]) => {
+  dataManager.updateOrder(newOrder);
+};
 </script>
 
 <style scoped>

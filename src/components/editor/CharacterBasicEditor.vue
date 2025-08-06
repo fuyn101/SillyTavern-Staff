@@ -155,7 +155,7 @@ const formRef = ref<FormInst | null>(null)
 const dataManager = useDataManager()
 
 // 表单数据 - 基础数据部分
-const formData = computed(() => dataManager.getBasicData())
+const formData = computed(() => dataManager.characterData)
 
 // 表单验证规则
 const formRules: FormRules = {
@@ -198,46 +198,22 @@ const triggerDataChange = () => {
 watch(
   formData,
   () => {
-    // 自动保存到本地存储
-    dataManager.saveBasicDataToLocalStorage()
     // 触发数据变化事件
     triggerDataChange()
   },
   { deep: true },
 )
 
-// 初始化数据
-onMounted(async () => {
-  try {
-    // 尝试从本地存储加载数据
-    const savedData = localStorage.getItem('character_full_data')
-    if (savedData) {
-      dataManager.loadFromJson(savedData)
-    } else {
-      // 重置为默认数据
-      dataManager.resetToDefault()
-    }
-  } catch (error) {
-    console.error('加载数据失败:', error)
-  }
-})
-
 // 加载数据（供父组件调用）
 const loadData = (data: any) => {
-  if (data.data) {
-    // 如果是完整数据
-    dataManager.setFullData(data)
-  } else {
-    // 如果只是基础数据
-    dataManager.setBasicData(data)
-  }
+  dataManager.setFullData(data)
   // 触发数据变化事件
   triggerDataChange()
 }
 
 // 获取数据（供父组件调用）
 const getData = () => {
-  return dataManager.getBasicData()
+  return dataManager.characterData
 }
 
 // 暴露方法给父组件

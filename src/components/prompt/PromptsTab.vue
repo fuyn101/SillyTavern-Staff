@@ -3,7 +3,7 @@
     <h2>提示词管理</h2>
     <n-split direction="horizontal" style="height: 80vh">
       <template #1>
-        <n-card title="提示词列表">
+        <n-card title="提示词列表" :content-style="{ flex: 1, overflow: 'auto' }" :style="{ height: '100%', display: 'flex', flexDirection: 'column' }">
           <n-list bordered>
             <n-list-item v-for="(prompt, index) in prompts" :key="prompt.identifier" @click="selectPrompt(index)">
               {{ prompt.name }}
