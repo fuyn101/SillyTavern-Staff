@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import defaultJson from '@/assets/default.json'
+import defaultJson from '@/assets/default_character.json'
 
 // 完整的角色JSON数据结构
 export interface CharacterData {

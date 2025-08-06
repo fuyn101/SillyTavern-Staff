@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { darkTheme, NConfigProvider, NMessageProvider, NNotificationProvider, NDialogProvider, NLoadingBarProvider, NSpace, NButton } from "naive-ui";
+import { NConfigProvider, NMessageProvider, NNotificationProvider, NDialogProvider, NLoadingBarProvider, NSpace, NButton } from "naive-ui";
 import { useRouter } from 'vue-router';
+import { useThemeStore } from './store/theme';
 
 const router = useRouter();
+const themeStore = useThemeStore();
 </script>
 
 <template>
-  <n-config-provider :theme="darkTheme">
+  <n-config-provider :theme="themeStore.theme">
     <n-message-provider>
       <n-notification-provider>
         <n-dialog-provider>
@@ -17,6 +19,7 @@ const router = useRouter();
                 <n-button @click="router.push('/editor')">编辑器</n-button>
                 <n-button @click="router.push('/two-page-editor')">预设对比编辑器</n-button>
                 <n-button @click="router.push('/file-manager')">文件管理</n-button>
+                <n-button @click="themeStore.toggleTheme">切换主题</n-button>
               </n-space>
               <router-view />
             </div>

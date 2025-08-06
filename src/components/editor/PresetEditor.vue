@@ -9,22 +9,41 @@
       </n-tab-pane>
     </n-tabs>
     <template #action>
-      <n-button @click="openFile">打开</n-button>
-      <n-button @click="saveFile">保存</n-button>
-      <n-button @click="saveAsFile">另存为</n-button>
+      <n-button @click="handleOpenFile">打开</n-button>
+      <n-button @click="handleSaveFile">保存</n-button>
+      <n-button @click="handleSaveFileAs">另存为</n-button>
+      <n-button @click="loadDefaultPreset">加载默认预设</n-button>
     </template>
   </n-card>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, onMounted, watch } from 'vue';
+import { NCard, NTabs, NTabPane, NButton } from 'naive-ui';
 import PromptsTab from '@/components/prompt/PromptsTab.vue';
 import MergedSettings from '@/components/settings/MergedSettings.vue';
+import { useFileSystem } from '@/composables/useFileSystem';
+import defaultPreset from '@/assets/Default prompt.json';
+
+const props = defineProps<{
+  initialData?: object;
+}>();
+
+const { openFile, saveFile, saveFileAs } = useFileSystem();
 
 const jsonData = reactive<any>({
   prompts: [],
   prompt_order: [],
 });
+
+const filePickerOptions: FilePickerOptions = {
+  types: [
+    {
+      description: 'JSON Files',
+      accept: { 'application/json': ['.json'] },
+    },
+  ],
+};
 
 function updatePrompts(newPrompts: any[]) {
   jsonData.prompts = newPrompts;
@@ -38,61 +57,34 @@ function updateSettings(newSettings: any) {
   Object.assign(jsonData, newSettings);
 }
 
-let fileHandle: FileSystemFileHandle | null = null;
-
-async function openFile() {
-  try {
-    [fileHandle] = await window.showOpenFilePicker({
-      types: [
-        {
-          description: 'JSON Files',
-          accept: {
-            'application/json': ['.json'],
-          },
-        },
-      ],
-    });
-    const file = await fileHandle.getFile();
-    const contents = await file.text();
-    const data = JSON.parse(contents);
+async function handleOpenFile() {
+  const data = await openFile(filePickerOptions);
+  if (data) {
     Object.assign(jsonData, data);
-  } catch (err) {
-    console.error('Error opening file:', err);
   }
 }
 
-async function saveFile() {
-  if (!fileHandle) {
-    saveAsFile();
-    return;
-  }
-  try {
-    const writable = await fileHandle.createWritable();
-    await writable.write(JSON.stringify(jsonData, null, 2));
-    await writable.close();
-  } catch (err) {
-    console.error('Error saving file:', err);
-  }
+function handleSaveFile() {
+  saveFile(jsonData);
 }
 
-async function saveAsFile() {
-  try {
-    const newFileHandle = await window.showSaveFilePicker({
-      types: [
-        {
-          description: 'JSON Files',
-          accept: {
-            'application/json': ['.json'],
-          },
-        },
-      ],
-    });
-    fileHandle = newFileHandle;
-    const writable = await newFileHandle.createWritable();
-    await writable.write(JSON.stringify(jsonData, null, 2));
-    await writable.close();
-  } catch (err) {
-    console.error('Error saving file as:', err);
-  }
+function handleSaveFileAs() {
+  saveFileAs(jsonData, filePickerOptions);
 }
+
+function loadDefaultPreset() {
+  Object.assign(jsonData, defaultPreset);
+}
+
+watch(() => props.initialData, (newData) => {
+  if (newData) {
+    Object.assign(jsonData, newData);
+  }
+}, { immediate: true });
+
+onMounted(() => {
+  if (props.initialData) {
+    Object.assign(jsonData, props.initialData);
+  }
+});
 </script>

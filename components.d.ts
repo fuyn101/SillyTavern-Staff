@@ -11,6 +11,7 @@ declare module 'vue' {
     CharacterBasicData: typeof import('./src/components/editor/tabs/CharacterBasicData.vue')['default']
     CharacterBasicEditor: typeof import('./src/components/editor/CharacterBasicEditor.vue')['default']
     CharacterBook: typeof import('./src/components/editor/tabs/CharacterBook.vue')['default']
+    CharacterCardItem: typeof import('./src/components/common/CharacterCardItem.vue')['default']
     CharacterDataEditor: typeof import('./src/components/editor/CharacterDataEditor.vue')['default']
     CharacterEditor: typeof import('./src/components/editor/CharacterEditor.vue')['default']
     CharacterExtensions: typeof import('./src/components/editor/tabs/CharacterExtensions.vue')['default']
