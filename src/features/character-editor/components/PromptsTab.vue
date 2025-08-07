@@ -182,6 +182,7 @@ function addPrompt() {
     role: "user",
     content: "",
     identifier: uuidv4(),
+    add_to_order: true,
     enabled: true,
     marker: false,
     injection_position: 0,

@@ -107,10 +107,10 @@ export interface CharacterData {
 
 export const useDataManager = defineStore('dataManager', () => {
   // State
-  const characterData = reactive<CharacterData>(
-    JSON.parse(localStorage.getItem('character_full_data') || JSON.stringify(defaultJson))
+  const editorCard = reactive<CharacterData>(
+    JSON.parse(localStorage.getItem('editor_card') || JSON.stringify(defaultJson))
   );
-  const originalData = reactive<CharacterData>(JSON.parse(JSON.stringify(characterData)));
+  const originalData = reactive<CharacterData>(JSON.parse(JSON.stringify(editorCard)));
   const prompts = ref<any[]>(defaultPrompts.prompts);
 
   const presetEditorLeft = reactive<any>({ prompts: [] });
@@ -123,20 +123,20 @@ export const useDataManager = defineStore('dataManager', () => {
   };
 
 
-  const getFullData = (): CharacterData => {
-    return JSON.parse(JSON.stringify(characterData));
+  const getEditorCard = (): CharacterData => {
+    return JSON.parse(JSON.stringify(editorCard));
   };
 
-  const setFullData = (data: CharacterData) => {
-    Object.assign(characterData, data);
+  const setEditorCard = (data: CharacterData) => {
+    Object.assign(editorCard, data);
     Object.assign(originalData, data);
-    localStorage.setItem('character_full_data', JSON.stringify(data));
+    localStorage.setItem('editor_card', JSON.stringify(data));
   };
 
-  const loadFromJson = (jsonString: string) => {
+  const loadCardToEditor = (jsonString: string) => {
     try {
       const data = JSON.parse(jsonString);
-      setFullData(data as CharacterData);
+      setEditorCard(data as CharacterData);
       return true;
     } catch (error) {
       console.error('JSON解析失败:', error);
@@ -144,8 +144,8 @@ export const useDataManager = defineStore('dataManager', () => {
     }
   };
 
-  const exportToJson = (): string => {
-    return JSON.stringify(characterData, null, 2);
+  const exportEditorCard = (): string => {
+    return JSON.stringify(editorCard, null, 2);
   };
 
   const initPresets = async () => {
@@ -192,7 +192,7 @@ export const useDataManager = defineStore('dataManager', () => {
     const list = getCardList();
     const card = list.find(c => c.name === name);
     if (card) {
-      setFullData(card);
+      setEditorCard(card);
       return true;
     }
     return false;
@@ -249,16 +249,16 @@ export const useDataManager = defineStore('dataManager', () => {
   };
 
   return {
-    characterData,
+    editorCard,
     prompts,
     presetEditorLeft,
     presetEditorRight,
     presetsReady,
     updatePrompts,
-    getFullData,
-    setFullData,
-    loadFromJson,
-    exportToJson,
+    getEditorCard,
+    setEditorCard,
+    loadCardToEditor,
+    exportEditorCard,
     updatePresetEditorData,
     loadPresetToEditor,
     // Card List
