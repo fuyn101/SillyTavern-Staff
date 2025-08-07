@@ -348,7 +348,6 @@
       </n-form>
     </n-tab-pane>
   </n-tabs>
-  <n-button @click="saveData" type="primary" block style="margin-top: 24px;">保存全部更改</n-button>
 </template>
 
 <script setup lang="ts">
@@ -462,13 +461,6 @@ const handleCharacterBookAdd = () => ({
   },
 });
 
-// --- Unified Save ---
-const saveData = () => {
-  dataManager.setEditorCard(JSON.parse(JSON.stringify(editorCard.value)));
-  // Optionally, you can add validation for both forms here
-  // basicFormRef.value?.validate(...)
-  // dataFormRef.value?.validate(...)
-};
 </script>
 
 <style scoped>

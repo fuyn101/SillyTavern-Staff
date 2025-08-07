@@ -1,5 +1,5 @@
 <template>
-  <n-split v-if="presetsReady" direction="horizontal" style="height: 100vh">
+  <n-split v-if="presetsReady" direction="horizontal" >
     <template #1>
       <preset-editor side="left" />
     </template>

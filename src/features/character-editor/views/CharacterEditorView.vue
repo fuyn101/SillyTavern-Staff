@@ -1,17 +1,22 @@
 <template>
   <n-layout style="height: 100%">
-    <n-layout-header bordered class="editor-header">
-      <n-h2 >角色卡编辑器</n-h2>
-      <n-space>
+    <n-layout-header bordered >
+    
+      <n-space justify="space-around">
+  
         <n-dropdown trigger="hover" :options="exportOptions" @select="handleExportSelect">
           <n-button type="primary">导出角色卡</n-button>
         </n-dropdown>
+                <n-h2 >角色卡编辑器</n-h2>
         <n-button @click="showJsonPreview = true">预览 JSON</n-button>
       </n-space>
     </n-layout-header>
-    <n-layout-content style="height: calc(100% - 64px); padding: 16px;">
+    <n-layout-content style="height: calc(100% - 128px); padding: 16px;">
       <CharacterEditor />
     </n-layout-content>
+    <n-layout-footer bordered style="padding: 24px">
+      <n-button @click="saveData" type="primary" block>保存全部更改</n-button>
+    </n-layout-footer>
   </n-layout>
 
   <n-modal
@@ -29,7 +34,8 @@ import { ref, watch, onMounted } from 'vue';
 import { 
   NLayout, 
   NLayoutHeader, 
-  NLayoutContent, 
+  NLayoutContent,
+  NLayoutFooter,
   NH2, 
   NButton,
   NModal, 
@@ -71,6 +77,11 @@ const handleExportSelect = (key: 'json' | 'png') => {
   } else if (key === 'png') {
     exportAsPng();
   }
+};
+
+const saveData = () => {
+  dataManager.setEditorCard(JSON.parse(JSON.stringify(editorCard.value)));
+  message.success('所有更改已保存！');
 };
 
 const exportAsJson = async () => {
