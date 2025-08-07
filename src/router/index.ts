@@ -13,22 +13,7 @@ const router = createRouter({
       path: '/editor',
       name: 'EditorView',
       component: () => import('@/features/character-editor/views/CharacterEditorView.vue'),
-      meta: { breadcrumb: 'Editor' },
-      redirect: '/editor/basic',
-      children: [
-        {
-          path: 'basic',
-          name: 'CharacterBasicEditor',
-          component: () => import('@/features/character-editor/components/CharacterBasicEditor.vue'),
-          meta: { breadcrumb: 'Basic Editor' }
-        },
-        {
-          path: 'data',
-          name: 'CharacterDataEditor',
-          component: () => import('@/features/character-editor/components/CharacterDataEditor.vue'),
-          meta: { breadcrumb: 'Data Editor' }
-        }
-      ]
+      meta: { breadcrumb: 'Editor' }
     },
     {
       path: '/preset-editor',

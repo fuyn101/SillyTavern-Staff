@@ -38,21 +38,9 @@ const menuOptions = [
     icon: renderIcon(HomeIcon)
   },
   {
-    label: '角色编辑器',
+    label: () => h(RouterLink, { to: '/editor' }, { default: () => '角色编辑器' }),
     key: 'editor',
-    icon: renderIcon(EditorIcon),
-    children: [
-      {
-        label: () => h(RouterLink, { to: '/editor/basic' }, { default: () => '编辑基础内容' }),
-        key: 'editor-basic',
-        icon: renderIcon(BasicIcon)
-      },
-      {
-        label: () => h(RouterLink, { to: '/editor/data' }, { default: () => '编辑Data' }),
-        key: 'editor-data',
-        icon: renderIcon(DataIcon)
-      }
-    ]
+    icon: renderIcon(EditorIcon)
   },
   {
     label: () => h(RouterLink, { to: '/two-page-editor' }, { default: () => '预设对比编辑器' }),

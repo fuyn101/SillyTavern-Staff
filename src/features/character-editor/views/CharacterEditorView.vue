@@ -4,8 +4,8 @@
       <n-h2 style="margin: 0;">角色卡编辑器</n-h2>
       <n-button @click="showJsonPreview = true">预览 JSON</n-button>
     </n-layout-header>
-    <n-layout-content style="height: 90%;">
-      <router-view />
+    <n-layout-content style="height: calc(100% - 64px); padding: 16px;">
+      <CharacterEditor />
     </n-layout-content>
   </n-layout>
 
@@ -31,6 +31,7 @@ import {
   NCode 
 } from 'naive-ui';
 import { useDataManager } from '@/store/dataManager';
+import CharacterEditor from '../components/CharacterEditor.vue';
 import { storeToRefs } from 'pinia';
 
 const dataManager = useDataManager();
