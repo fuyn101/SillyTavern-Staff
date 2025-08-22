@@ -1,0 +1,26 @@
+{
+  "spec": "chara_card_v3",
+  "spec_version": "3.0",
+  "data": {
+    "name": "",
+    "description": "",
+    "tags": [],
+    "creator": "",
+    "character_version": "1.0",
+    "mes_example": "",
+    "extensions": {},
+    "system_prompt": "",
+    "post_history_instructions": "",
+    "first_mes": "",
+    "alternate_greetings": [],
+    "personality": "",
+    "scenario": "",
+    "creator_notes": "",
+    "nickname": "",
+    "source": [],
+    "group_only_greetings": [],
+    "creation_date": 1755877270,
+    "modification_date": 1755877270,
+    "assets": []
+  }
+}

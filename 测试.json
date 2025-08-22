@@ -1,0 +1,50 @@
+{
+  "name": "测试",
+  "description": "",
+  "personality": "",
+  "scenario": "",
+  "first_mes": "",
+  "mes_example": "",
+  "creatorcomment": "",
+  "avatar": "none",
+  "talkativeness": "0.5",
+  "fav": false,
+  "tags": [],
+  "spec": "chara_card_v3",
+  "spec_version": "3.0",
+  "data": {
+    "name": "测试",
+    "description": "",
+    "personality": "",
+    "scenario": "测试",
+    "first_mes": "显示在主屏幕上的消息 本应该是MD",
+    "mes_example": "",
+    "creator_notes": "",
+    "system_prompt": "",
+    "post_history_instructions": "",
+    "tags": [
+      "NTL"
+    ],
+    "creator": "Fuyn",
+    "character_version": "3.1",
+    "alternate_greetings": [],
+    "extensions": {
+      "talkativeness": "0.5",
+      "fav": false,
+      "world": "",
+      "depth_prompt": {
+        "prompt": "",
+        "depth": 4,
+        "role": "system"
+      }
+    },
+    "group_only_greetings": [],
+    "modification_date": 1755877289,
+    "nickname": "昵称？",
+    "source": [
+      "https://baidu.com"
+    ],
+    "assets": []
+  },
+  "create_date": "2025-8-22 @23h 03m 05s 613ms"
+}
