@@ -13,13 +13,66 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont, QAction
+from PySide6.QtGui import QFont, QAction, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QTextEdit, QPushButton, QListWidget, QListWidgetItem,
     QTabWidget, QScrollArea, QGroupBox, QSpinBox, QMessageBox, QFileDialog,
     QSplitter, QFrame
 )
+
+
+class MarkdownEditorWidget(QWidget):
+    """Markdown编辑器，带有编辑和预览选项卡"""
+    
+    def __init__(self, placeholder_text: str = ""):
+        super().__init__()
+        self.placeholder_text = placeholder_text
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # 创建选项卡
+        self.tab_widget = QTabWidget()
+        
+        # 编辑选项卡
+        self.edit_tab = QWidget()
+        edit_layout = QVBoxLayout(self.edit_tab)
+        self.edit_text = QTextEdit()
+        self.edit_text.setPlaceholderText(self.placeholder_text)
+        self.edit_text.textChanged.connect(self.update_preview)
+        edit_layout.addWidget(self.edit_text)
+        self.tab_widget.addTab(self.edit_tab, "编辑")
+        
+        # 预览选项卡
+        self.preview_tab = QWidget()
+        preview_layout = QVBoxLayout(self.preview_tab)
+        self.preview_text = QTextEdit()
+        self.preview_text.setReadOnly(True)
+        preview_layout.addWidget(self.preview_text)
+        self.tab_widget.addTab(self.preview_tab, "预览")
+        
+        layout.addWidget(self.tab_widget)
+        
+    def setPlainText(self, text: str):
+        """设置文本内容"""
+        self.edit_text.setPlainText(text)
+        self.update_preview()
+        
+    def toPlainText(self) -> str:
+        """获取文本内容"""
+        return self.edit_text.toPlainText()
+        
+    def update_preview(self):
+        """更新Markdown预览"""
+        from markdown import markdown
+        try:
+            md_text = self.edit_text.toPlainText()
+            html = markdown(md_text)
+            self.preview_text.setHtml(html)
+        except Exception as e:
+            self.preview_text.setPlainText(f"渲染错误: {str(e)}")
 
 
 class TagListWidget(QWidget):
@@ -92,6 +145,123 @@ class TagListWidget(QWidget):
         old_text = item.text()
         new_text, ok = QLineEdit().text(), True  # 简化的编辑
         # 这里可以添加更复杂的编辑对话框
+        
+    def get_items(self) -> List[str]:
+        """获取所有项目"""
+        return self.items.copy()
+
+
+class MarkdownTagListWidget(QWidget):
+    """支持Markdown的标签列表编辑器"""
+    
+    def __init__(self, title: str, items: List[str] = None):
+        super().__init__()
+        self.title = title
+        self.items = items or []
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # 标题
+        title_label = QLabel(self.title)
+        title_label.setFont(QFont("Arial", 10, QFont.Bold))
+        layout.addWidget(title_label)
+        
+        # 添加新项目区域
+        add_group = QGroupBox("添加新项目")
+        add_layout = QVBoxLayout(add_group)
+        
+        self.new_item_editor = MarkdownEditorWidget(f"添加新的{self.title}")
+        add_layout.addWidget(self.new_item_editor)
+        
+        add_btn = QPushButton("添加")
+        add_btn.clicked.connect(self.add_item)
+        add_layout.addWidget(add_btn)
+        
+        layout.addWidget(add_group)
+        
+        # 列表
+        self.list_widget = QListWidget()
+        self.list_widget.itemDoubleClicked.connect(self.edit_item)
+        layout.addWidget(self.list_widget)
+        
+        # 编辑/删除按钮区域
+        button_layout = QHBoxLayout()
+        
+        edit_btn = QPushButton("编辑选中项")
+        edit_btn.clicked.connect(self.edit_selected_item)
+        button_layout.addWidget(edit_btn)
+        
+        remove_btn = QPushButton("删除选中项")
+        remove_btn.clicked.connect(self.remove_item)
+        button_layout.addWidget(remove_btn)
+        
+        layout.addLayout(button_layout)
+        
+        # 加载现有项目
+        self.load_items()
+        
+    def load_items(self):
+        """加载现有项目"""
+        self.list_widget.clear()
+        for item in self.items:
+            # 显示前100个字符作为预览
+            preview = item[:100] + "..." if len(item) > 100 else item
+            self.list_widget.addItem(preview)
+            
+    def add_item(self):
+        """添加新项目"""
+        text = self.new_item_editor.toPlainText().strip()
+        if text and text not in self.items:
+            self.items.append(text)
+            self.load_items()
+            self.new_item_editor.setPlainText("")
+            
+    def remove_item(self):
+        """删除选中项目"""
+        current_row = self.list_widget.currentRow()
+        if current_row >= 0:
+            del self.items[current_row]
+            self.load_items()
+            
+    def edit_selected_item(self):
+        """编辑选中项目"""
+        current_row = self.list_widget.currentRow()
+        if current_row >= 0 and current_row < len(self.items):
+            # 创建编辑对话框
+            dialog = QDialog(self)
+            dialog.setWindowTitle(f"编辑{self.title}")
+            dialog.setModal(True)
+            dialog.setMinimumSize(600, 400)
+            
+            layout = QVBoxLayout(dialog)
+            
+            editor = MarkdownEditorWidget()
+            editor.setPlainText(self.items[current_row])
+            layout.addWidget(editor)
+            
+            button_layout = QHBoxLayout()
+            save_btn = QPushButton("保存")
+            cancel_btn = QPushButton("取消")
+            
+            def save_changes():
+                self.items[current_row] = editor.toPlainText()
+                self.load_items()
+                dialog.accept()
+                
+            save_btn.clicked.connect(save_changes)
+            cancel_btn.clicked.connect(dialog.reject)
+            
+            button_layout.addWidget(save_btn)
+            button_layout.addWidget(cancel_btn)
+            layout.addLayout(button_layout)
+            
+            dialog.exec()
+            
+    def edit_item(self, item: QListWidgetItem):
+        """双击编辑项目"""
+        self.edit_selected_item()
         
     def get_items(self) -> List[str]:
         """获取所有项目"""
@@ -377,22 +547,20 @@ class CharacterCardEditor(QMainWindow):
         
         # 第一条消息
         scroll_layout.addWidget(QLabel("第一条消息:"))
-        self.first_mes_edit = QTextEdit()
-        self.first_mes_edit.setMaximumHeight(80)
-        scroll_layout.addWidget(self.first_mes_edit)
+        self.first_mes_editor = MarkdownEditorWidget("输入角色的第一条消息")
+        scroll_layout.addWidget(self.first_mes_editor)
         
         # 示例对话
         scroll_layout.addWidget(QLabel("示例对话:"))
-        self.mes_example_edit = QTextEdit()
-        self.mes_example_edit.setMaximumHeight(80)
-        scroll_layout.addWidget(self.mes_example_edit)
+        self.mes_example_editor = MarkdownEditorWidget("输入示例对话内容")
+        scroll_layout.addWidget(self.mes_example_editor)
         
         # 备选问候语
-        self.alternate_greetings_widget = TagListWidget("备选问候语")
+        self.alternate_greetings_widget = MarkdownTagListWidget("备选问候语")
         scroll_layout.addWidget(self.alternate_greetings_widget)
         
         # 群聊专用问候语
-        self.group_only_greetings_widget = TagListWidget("群聊专用问候语")
+        self.group_only_greetings_widget = MarkdownTagListWidget("群聊专用问候语")
         scroll_layout.addWidget(self.group_only_greetings_widget)
         
         scroll.setWidget(scroll_widget)
@@ -528,8 +696,8 @@ class CharacterCardEditor(QMainWindow):
         
         # 对话内容
         self.scenario_edit.setPlainText(data.get('scenario', ''))
-        self.first_mes_edit.setPlainText(data.get('first_mes', ''))
-        self.mes_example_edit.setPlainText(data.get('mes_example', ''))
+        self.first_mes_editor.setPlainText(data.get('first_mes', ''))
+        self.mes_example_editor.setPlainText(data.get('mes_example', ''))
         
         # 高级选项
         self.system_prompt_edit.setPlainText(data.get('system_prompt', ''))
@@ -572,8 +740,8 @@ class CharacterCardEditor(QMainWindow):
         
         # 对话内容
         data['data']['scenario'] = self.scenario_edit.toPlainText()
-        data['data']['first_mes'] = self.first_mes_edit.toPlainText()
-        data['data']['mes_example'] = self.mes_example_edit.toPlainText()
+        data['data']['first_mes'] = self.first_mes_editor.toPlainText()
+        data['data']['mes_example'] = self.mes_example_editor.toPlainText()
         
         # 高级选项
         data['data']['system_prompt'] = self.system_prompt_edit.toPlainText()
